@@ -21,6 +21,7 @@
 
 - [Le concept](#le-concept)
 - [Écran externe](#écran-externe)
+- [Plier et déplier](#plier-et-déplier)
 - [Écran interne](#écran-interne)
 - [Recherche](#recherche)
 - [Widgets](#widgets)
@@ -63,6 +64,12 @@ Un Fold, c’est deux téléphones en un : un écran externe étroit qu’on uti
 - **Pastilles de notifications** sur les icônes.
 - **Pas de widgets** ici : l’écran est trop étroit, ils vivent sur l’écran interne.
 
+## Plier et déplier
+
+- **Continuité** : l’autre écran s’ouvre sur la page qui contient les mêmes applis.
+- **Écran externe miroir** : replié depuis une page que l’écran externe n’a pas, ses applis s’y affichent quand même.
+- **Mode chevalet** : à moitié plié et tourné comme un petit ordinateur, l’heure et la musique en haut, de grosses commandes en bas.
+
 ## Écran interne
 
 - **Page « Aujourd’hui »** à gauche : météo, agenda, batterie des appareils, note rapide, rappels, temps d’écran, interrupteurs rapides… et n’importe quel widget Android.
@@ -82,6 +89,8 @@ Un Fold, c’est deux téléphones en un : un écran externe étroit qu’on uti
 - S’ouvre en **glissant vers le bas** ou avec le bouton à côté de l’horloge ; se ferme en glissant.
 - Cherche dans les **applis, les contacts, les réglages et le web**, et fait les **calculs** directement.
 - **Elle apprend** : les applis que tu ouvres le plus souvent depuis une recherche remontent en premier.
+- **Actions directes** : « minuteur 10 min », « alarme 7h », « rappel pain », « 5 miles en km », « 20 € en dollars » (taux BCE), « appeler Maman », « sms Léa ».
+- **Suggestions sous l’horloge** selon la situation : en voiture, casque branché, rendez-vous proche, avant de dormir, ou les applis habituelles de l’heure.
 - **Ajout de plusieurs applis d’un coup** sur l’accueil depuis la liste.
 
 ---
@@ -97,6 +106,9 @@ Un Fold, c’est deux téléphones en un : un écran externe étroit qu’on uti
 | Rappels | Une petite liste de choses à faire, à cocher. |
 | Temps d’écran | Le temps passé aujourd’hui et les applis les plus utilisées. |
 | Interrupteurs | Lampe, Bluetooth, sonnerie/vibreur, ne pas déranger, rotation (Wi-Fi, données et NFC ouvrent le panneau système). |
+| Prochain trajet | Le prochain rendez-vous avec une adresse, et l’itinéraire en un appui. |
+| Compte à rebours | Les jours restants avant un événement que tu choisis. |
+| Souvenir du jour | Une photo prise à cette date les années précédentes. |
 | Widgets Android | N’importe quel widget installé, redimensionnable. |
 | Piles | Plusieurs widgets empilés au même endroit, on passe de l’un à l’autre en glissant. |
 
@@ -109,6 +121,7 @@ Un Fold, c’est deux téléphones en un : un écran externe étroit qu’on uti
 | Glisser vers le bas | Recherche (ou panneau de notifications, au choix) |
 | Glisser vers le haut | Liste de toutes les applis |
 | Double appui | Verrouiller l’écran (réglable) |
+| Dessiner une forme | Ouvre l’appli associée (Réglages → Gestes → Dessins) |
 | Deux doigts vers le haut / le bas | Action au choix |
 | Appui long sur une appli | Menu : raccourcis, renommer, changer d’icône, protéger, infos, stockage, désinstaller |
 | Appui long sur le fond | Mode édition : déplacer, sélection multiple, corbeille, ajouter des pages |
@@ -119,6 +132,10 @@ Un **guide des gestes** animé s’affiche au premier lancement, et reste access
 
 ## Personnalisation
 
+- **Palettes de couleurs** : Holographique, couleurs du fond d’écran, Aurore, Océan, Braise, Menthe.
+- **Ambiance jour et nuit** automatique et **halos vivants** qui suivent l’heure et la batterie.
+- **Effets de changement de page** : Profondeur, Cube, Fondu, Carrousel.
+- **Notifications en orbite** autour des icônes, et **pastille « Nouveau »** sur les applis récemment installées.
 - **Forme des icônes** : rond, squircle, arrondi, carré, goutte, feuille ou forme d’origine.
 - **Packs d’icônes** et icônes **teintées** dans la couleur du thème.
 - **Renommer une appli** et lui donner une **icône personnalisée** (image de la galerie).
@@ -224,6 +241,9 @@ Tout le code est dans [`app/src/main/java/com/yuksel/pli/`](https://github.com/y
 | `Services.kt`, `PliAccessibility.kt` | Pastilles de notifications et verrouillage par geste. |
 | `Store.kt` | Enregistrement des réglages, de la disposition et de la note. |
 | `Updater.kt` | Mises à jour intégrées : vérification sur GitHub, fenêtre des nouveautés, téléchargement et installation. |
+| `Continuity.kt`, `Tabletop.kt` | Continuité au pliage, écran externe miroir, mode chevalet. |
+| `Suggestions.kt`, `QuickActions.kt` | Suggestions selon la situation, actions directes de la recherche. |
+| `Theme.kt`, `Draw.kt`, `NewCards.kt` | Palettes et ambiance, dessiner pour lancer, nouvelles cartes Aujourd’hui. |
 | `Perf.kt` | Travail suspendu quand le launcher n’est pas à l’écran (horloge, météo, capteurs). |
 
 > Le nom interne du code reste `pli` (nom de travail du projet) pour que les mises à jour s’installent par-dessus les versions déjà présentes.
