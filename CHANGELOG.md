@@ -3,6 +3,11 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 23 — Mises à jour économes
+
+- **Vérification toutes les 6 heures** par défaut, à l’accueil comme en arrière-plan, pour épargner la batterie (la build 21 vérifiait toutes les 5 à 15 minutes).
+- **Fréquence réglable** : toutes les heures, toutes les 6 h ou une fois par jour (Réglages → Paramètres → Mises à jour). « Vérifier » reste disponible à tout moment.
+
 ## Build 22
 
 - **Rangée « Ce matin / Ce midi… » retirée** : les applis habituelles de l’heure ne s’affichent plus sous l’horloge. Il ne reste que les suggestions de situation (voiture, casque, rendez-vous proche, avant de dormir), désactivables dans Réglages → Accueil → Suggestions.
