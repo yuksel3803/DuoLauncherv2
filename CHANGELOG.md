@@ -3,6 +3,10 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 27
+
+- **Retirer une pastille à la main** : appui long sur une appli → « Retirer la pastille ». Le chiffre ou les bulles en orbite disparaissent jusqu’au prochain nouveau message ; les notifications restent dans le volet.
+
 ## Build 26
 
 - **Créer un dossier plus facilement** : lâcher une appli n’importe où sur l’icône d’une autre (avec une marge) crée le dossier ; avant, il fallait viser le centre exact de l’icône, sinon l’appli était seulement déplacée à côté.
