@@ -186,7 +186,9 @@ fun applyDrop(launcher: Launcher, source: DragSource, spot: DropSpot, drag: Drag
         }
         DropSpot.Dock(spot.screen, index)
     } else spot
-    launcher.edit(if (spot == DropSpot.Remove) "Retiré de l’accueil" else "Déplacé") { LayoutEdits.drop(it, source, mapped, launcher.dockSizes) }
+    // A plain move shows nothing; only taking an app off the home screen offers "Annuler".
+    if (spot == DropSpot.Remove) launcher.edit("Retiré de l’accueil") { LayoutEdits.drop(it, source, mapped, launcher.dockSizes) }
+    else launcher.update { LayoutEdits.drop(it, source, mapped, launcher.dockSizes) }
 }
 
 /** Press-and-hold then drag. A hold without moving opens the menu ([onHold]); moving starts the drag and closes it. */
