@@ -106,6 +106,8 @@ class HostSignals {
     var homePresses by mutableIntStateOf(0)
     var resumes by mutableIntStateOf(0)
     var isDefaultHome by mutableStateOf(true)
+    /** Bumped when the update notification is tapped. */
+    var updateTaps by mutableIntStateOf(0)
 }
 
 private enum class Panel { NONE, SEARCH, DRAWER, SETTINGS, WIDGETS, HOME_MENU, ADD_APPS, GUIDE, ONBOARDING, DRAW }
@@ -425,9 +427,15 @@ fun PliApp(host: PliHost, signals: HostSignals) {
                     PillButton("Annuler", highlighted = true) { launcher.undoLast() }
                 }
             }
-            // A newer Fold Launcher Pro on GitHub: checked when the launcher comes on screen (at most every 6 h).
-            LaunchedEffect(onScreen, launcher.loaded, launcher.settings.onboarded) {
-                if (onScreen && launcher.loaded && launcher.settings.onboarded) Updater.check(context, manual = false)
+            // A newer Fold Launcher Pro on GitHub: checked when the launcher comes on screen (at most every 15 min).
+            LaunchedEffect(onScreen, launcher.loaded, launcher.settings.onboarded, signals.updateTaps) {
+                if (!launcher.loaded || !launcher.settings.onboarded) return@LaunchedEffect
+                // Android 13+: allowed to show the "new version" notification (asked once).
+                if (android.os.Build.VERSION.SDK_INT >= 33 && Updater.askNotifications(context)) host.requestPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                while (onScreen) {
+                    Updater.check(context, manual = false)
+                    delay(5 * 60_000L)
+                }
             }
             UpdateDialog()
         }

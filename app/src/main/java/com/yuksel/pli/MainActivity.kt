@@ -54,6 +54,8 @@ class MainActivity : ComponentActivity(), PliHost {
         widgets = Widgets(this)
         setContent { PliApp(this, signals) }
         lifecycleScope.launch { launcher.start() }
+        Updater.schedule(this)
+        if (intent?.getBooleanExtra(Updater.EXTRA_SHOW, false) == true) { Updater.forceNext = true; signals.updateTaps++ }
         launcher.repository.listen { packageName, kind ->
             lifecycleScope.launch {
                 launcher.reloadApps(
@@ -90,6 +92,7 @@ class MainActivity : ComponentActivity(), PliHost {
         super.onNewIntent(intent)
         // Pressing Home while Pli is already in front closes panels and returns to the first page.
         if (intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_HOME)) signals.homePresses++
+        if (intent.getBooleanExtra(Updater.EXTRA_SHOW, false)) { Updater.forceNext = true; signals.updateTaps++ }
     }
 
     @Deprecated("Widget binding and configuration still report through onActivityResult")

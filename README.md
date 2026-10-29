@@ -173,7 +173,7 @@ Les réglages sont organisés en **catégories** avec un **aperçu en direct** d
 
 Depuis la build 17, **Fold Launcher Pro se met à jour tout seul** : quand une nouvelle version sort, une fenêtre affiche les nouveautés avec un bouton « Mettre à jour ». Le téléchargement et l’installation se font dans l’appli, et la disposition est conservée.
 
-- Vérification automatique au plus toutes les 6 heures (désactivable), « Plus tard » la repousse d’une journée.
+- Vérification à chaque retour sur l’accueil et toutes les 5 minutes tant qu’il est affiché ; en arrière-plan toutes les 15 minutes avec une notification « Nouvelle version disponible » (désactivable). « Plus tard » repousse la fenêtre d’une journée, la notification la rouvre.
 - Vérification à la main : Réglages → Paramètres → Mises à jour.
 - Tout ce qui change à chaque version : **[Journal des versions](CHANGELOG.md)**.
 

@@ -3,6 +3,12 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 21 — Mises à jour immédiates
+
+- **Fenêtre de mise à jour sans attendre** : le launcher regarde sur GitHub à chaque retour sur l’accueil, puis toutes les 5 minutes tant qu’il est affiché (avant : une fois toutes les 6 heures, d’où l’absence de fenêtre).
+- **Notification en arrière-plan** : toutes les 15 minutes, même dans une autre appli, une notification « Fold Launcher Pro — build N disponible » ; la toucher ouvre directement la fenêtre de mise à jour. L’autorisation des notifications est demandée une fois.
+- Vérifications plus légères : GitHub répond « rien de nouveau » sans renvoyer la liste quand elle n’a pas changé.
+
 ## Build 20 — Aperçu fidèle
 
 - L’aperçu des réglages reproduit exactement la première page de ton accueil : même grille, cases vides conservées, dossiers et grands dossiers à leur place et à leur taille, aux vraies proportions de chaque écran.

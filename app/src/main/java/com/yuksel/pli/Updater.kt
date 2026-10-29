@@ -58,7 +58,13 @@ import java.net.URL
 object Updater {
     private const val RELEASES = "https://api.github.com/repos/yuksel3803/DuoLauncherv2/releases?per_page=20"
     private const val PREFS = "updates"
-    private const val CHECK_EVERY = 6 * 3_600_000L
+    /** Automatic checks run each time the home screen comes back (and every 5 min while it stays); this only avoids doubles. */
+    private const val CHECK_EVERY = 20_000L
+    const val CHANNEL = "updates"
+    const val EXTRA_SHOW = "com.yuksel.pli.SHOW_UPDATE"
+
+    /** Set when the update notification is tapped: the window opens even after "Plus tard". */
+    var forceNext = false
     private const val LATER_FOR = 24 * 3_600_000L
 
     data class Release(val build: Int, val notes: String, val apkUrl: String, val size: Long)
@@ -80,20 +86,31 @@ object Updater {
     }.getOrDefault(0)
 
     fun automatic(context: Context) = prefs(context).getBoolean("auto", true)
+
+    /** True the first time only: the launcher then asks for the notification permission. */
+    fun askNotifications(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < 33 || context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED) return false
+        val p = prefs(context)
+        if (p.getBoolean("askedNotifications", false)) return false
+        p.edit().putBoolean("askedNotifications", true).apply()
+        return true
+    }
     fun setAutomatic(context: Context, on: Boolean) { prefs(context).edit().putBoolean("auto", on).apply() }
 
     /**
-     * Asks GitHub for the latest build. Automatic checks run at most every 6 hours and respect "Plus tard";
+     * Asks GitHub for the latest build. Automatic checks respect "Plus tard" (unless the notification was tapped);
      * a manual check (from the settings) always runs and always opens the window when there is something new.
      */
     suspend fun check(context: Context, manual: Boolean) {
+        val forced = forceNext.also { forceNext = false }
         val p = prefs(context)
         val now = System.currentTimeMillis()
-        if (!manual && (!automatic(context) || now - p.getLong("checkedAt", 0) < CHECK_EVERY) && available == null) return
+        if (!manual && !forced && (!automatic(context) || now - p.getLong("checkedAt", 0) < CHECK_EVERY) && available == null) return
         if (checking) return
         checking = true
         if (manual) message = null
-        val release = withContext(Dispatchers.IO) { runCatching { latest() }.getOrNull() }
+        val release = withContext(Dispatchers.IO) { runCatching { latest(p) }.getOrNull() }
         checking = false
         if (release == null) { if (manual) message = "Impossible de joindre GitHub. Vérifie la connexion."; return }
         p.edit().putLong("checkedAt", now).apply()
@@ -104,8 +121,52 @@ object Updater {
         }
         available = release
         val snoozed = p.getInt("laterBuild", 0) == release.build && now < p.getLong("laterUntil", 0)
-        if (manual || !snoozed) dialog = true
+        if (manual || forced || !snoozed) dialog = true
     }
+
+    /** Background check (scheduled job): returns the newer build, if any. Blocking, call off the main thread. */
+    fun checkInBackground(context: Context): Release? {
+        if (!automatic(context)) return null
+        val release = runCatching { latest(prefs(context)) }.getOrNull() ?: return null
+        prefs(context).edit().putLong("checkedAt", System.currentTimeMillis()).apply()
+        return release.takeIf { it.build > currentBuild(context) }
+    }
+
+    /** "Nouvelle version disponible", once per build. Tapping it opens the launcher on the update window. */
+    fun notify(context: Context, release: Release) {
+        val p = prefs(context)
+        if (p.getInt("notifiedBuild", 0) >= release.build) return
+        if (Build.VERSION.SDK_INT >= 33 && context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED) return
+        val manager = context.getSystemService(android.app.NotificationManager::class.java) ?: return
+        manager.createNotificationChannel(android.app.NotificationChannel(CHANNEL, "Mises à jour", android.app.NotificationManager.IMPORTANCE_DEFAULT)
+            .apply { description = "Nouvelle version de Fold Launcher Pro" })
+        val open = PendingIntent.getActivity(context, 1, Intent(context, MainActivity::class.java).putExtra(EXTRA_SHOW, true)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val first = release.notes.lineSequence().firstOrNull { it.isNotBlank() }?.trim() ?: "Touche pour voir les nouveautés"
+        val notification = android.app.Notification.Builder(context, CHANNEL)
+            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setContentTitle("Fold Launcher Pro — build ${release.build} disponible")
+            .setContentText(first)
+            .setStyle(android.app.Notification.BigTextStyle().bigText(release.notes.ifBlank { first }))
+            .setContentIntent(open).setAutoCancel(true).build()
+        runCatching { manager.notify(4242, notification) }
+        p.edit().putInt("notifiedBuild", release.build).apply()
+    }
+
+    /** Checks every 15 minutes in the background (Android's minimum), even while another app is open. */
+    fun schedule(context: Context) {
+        val jobs = context.getSystemService(android.app.job.JobScheduler::class.java) ?: return
+        if (jobs.getPendingJob(JOB_ID) != null) return
+        val job = android.app.job.JobInfo.Builder(JOB_ID, android.content.ComponentName(context, UpdateJob::class.java))
+            .setPeriodic(15 * 60_000L)
+            .setRequiredNetworkType(android.app.job.JobInfo.NETWORK_TYPE_ANY)
+            .setPersisted(true)
+            .build()
+        runCatching { jobs.schedule(job) }
+    }
+
+    private const val JOB_ID = 4242
 
     fun open() { if (available != null) { message = null; dialog = true } }
 
@@ -115,13 +176,19 @@ object Updater {
         message = null
     }
 
-    private fun latest(): Release? {
+    /** Asks GitHub with the last ETag: an unchanged list answers "304" (free, instant) and the saved copy is reused. */
+    private fun latest(p: android.content.SharedPreferences): Release? {
         val connection = (URL(RELEASES).openConnection() as HttpURLConnection).apply {
             connectTimeout = 10_000; readTimeout = 15_000
             setRequestProperty("Accept", "application/vnd.github+json")
             setRequestProperty("User-Agent", "FoldLauncherPro")
+            val cached = p.getString("body", null)
+            p.getString("etag", null)?.takeIf { cached != null }?.let { setRequestProperty("If-None-Match", it) }
         }
-        val text = connection.inputStream.bufferedReader().use { it.readText() }
+        val text = if (connection.responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) p.getString("body", null) ?: return null
+        else connection.inputStream.bufferedReader().use { it.readText() }.also { body ->
+            p.edit().putString("body", body).putString("etag", connection.getHeaderField("ETag")).apply()
+        }
         val array = JSONArray(text)
         var best: Release? = null
         for (i in 0 until array.length()) {
@@ -220,6 +287,18 @@ object Updater {
             else -> message = "Installation impossible : " + (intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: "erreur inconnue")
         }
     }
+}
+
+/** The background check: GitHub → notification when a newer build is out. */
+class UpdateJob : android.app.job.JobService() {
+    override fun onStartJob(params: android.app.job.JobParameters?): Boolean {
+        Thread {
+            Updater.checkInBackground(applicationContext)?.let { Updater.notify(applicationContext, it) }
+            jobFinished(params, false)
+        }.start()
+        return true
+    }
+    override fun onStopJob(params: android.app.job.JobParameters?) = true
 }
 
 /** Receives the installer's answer (confirmation needed, done, failed). */
