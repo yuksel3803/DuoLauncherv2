@@ -3,6 +3,11 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 26
+
+- **Créer un dossier plus facilement** : lâcher une appli n’importe où sur l’icône d’une autre (avec une marge) crée le dossier ; avant, il fallait viser le centre exact de l’icône, sinon l’appli était seulement déplacée à côté.
+- Une petite vibration accompagne l’anneau irisé quand lâcher créera un dossier.
+
 ## Build 25
 
 - **Bandeau « Déplacé » retiré** : déplacer une appli ne fait plus apparaître « Annuler » en bas de l’écran. Il reste seulement quand on retire une appli de l’accueil.
