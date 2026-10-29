@@ -61,7 +61,15 @@ import java.time.ZoneId
 
 data class Task(val id: Long, val text: String, val done: Boolean)
 
-private object TaskStore {
+object TaskStore {
+    /** Bumped when a task is added from elsewhere (search), so the card reloads. */
+    var version by mutableStateOf(0)
+
+    fun add(context: Context, text: String) {
+        save(context, load(context) + Task(System.currentTimeMillis(), text.trim(), false))
+        version++
+    }
+
     fun load(context: Context): List<Task> = runCatching {
         val a = JSONArray(context.getSharedPreferences("pli", Context.MODE_PRIVATE).getString("tasks", "[]"))
         (0 until a.length()).mapNotNull { a.optJSONObject(it) }.map { Task(it.optLong("id"), it.optString("text"), it.optBoolean("done")) }
@@ -77,7 +85,7 @@ private object TaskStore {
 @Composable
 fun TasksCard() {
     val context = LocalContext.current
-    var tasks by remember { mutableStateOf(TaskStore.load(context)) }
+    var tasks by remember(TaskStore.version) { mutableStateOf(TaskStore.load(context)) }
     var draft by remember { mutableStateOf("") }
     fun save(list: List<Task>) { tasks = list; TaskStore.save(context, list) }
     fun add() {

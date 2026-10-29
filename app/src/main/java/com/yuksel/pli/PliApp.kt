@@ -108,7 +108,7 @@ class HostSignals {
     var isDefaultHome by mutableStateOf(true)
 }
 
-private enum class Panel { NONE, SEARCH, DRAWER, SETTINGS, WIDGETS, HOME_MENU, ADD_APPS, GUIDE, ONBOARDING }
+private enum class Panel { NONE, SEARCH, DRAWER, SETTINGS, WIDGETS, HOME_MENU, ADD_APPS, GUIDE, ONBOARDING, DRAW }
 
 /**
  * Swipe up / down on the home screen. It watches the touch before the icons and pages do
@@ -181,7 +181,11 @@ fun PliApp(host: PliHost, signals: HostSignals) {
 
 
     val selection = remember { Selection() }
-    fun closeAll() { panel = Panel.NONE; menu = null; folder = null; todayEditing = false; drag.clear(); selection.clear() }
+    val continuity = remember { Continuity() }
+    var mirror by remember { mutableStateOf<List<String>?>(null) }
+    var settingsStart by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(panel) { if (panel != Panel.SETTINGS) settingsStart = null }
+    fun closeAll() { panel = Panel.NONE; menu = null; folder = null; todayEditing = false; drag.clear(); selection.clear(); mirror = null }
     LaunchedEffect(signals.homePresses) { if (signals.homePresses > 0) { closeAll(); article = null } }
     BackHandler(panel != Panel.NONE || menu != null || folder != null || todayEditing) {
         when {
@@ -200,6 +204,7 @@ fun PliApp(host: PliHost, signals: HostSignals) {
             host.launch(app, bounds?.takeIf { it != Rect.Zero })
             if (panel == Panel.SEARCH || panel == Panel.DRAWER) panel = Panel.NONE
             folder = null
+            mirror = null
         }
         if (app.id in launcher.layout.protectedApps) host.authenticate("Ouvrir ${app.label}", go) else go()
     }
@@ -223,6 +228,7 @@ fun PliApp(host: PliHost, signals: HostSignals) {
             action == "notifications" -> host.expandNotifications()
             action == "search" -> panel = Panel.SEARCH
             action == "drawer" -> panel = Panel.DRAWER
+            action == "draw" -> panel = Panel.DRAW
             action.startsWith("app:") -> launcher.byId[action.removePrefix("app:")]?.let { open(it, null) }
         }
     }
@@ -234,11 +240,18 @@ fun PliApp(host: PliHost, signals: HostSignals) {
         todayEditing = { todayEditing }, setTodayEditing = { todayEditing = it },
         addWidget = { panel = Panel.WIDGETS }, settings = { panel = Panel.SETTINGS },
         gesture = ::runGesture, read = { article = it },
+        continuity = continuity, mirror = { if (folder == null) mirror = it },
     )
 
     BackHandler(selection.active) { selection.clear() }
     LaunchedEffect(launcher.settings.lockLayout) { if (launcher.settings.lockLayout) selection.clear() }
+    ThemeController(launcher.settings, today)
+    val newApps = remember(launcher.byId, launcher.lastLaunch, launcher.settings.newBadge) {
+        if (launcher.settings.newBadge) launcher.newApps() else emptySet()
+    }
     CompositionLocalProvider(LocalBubbles provides launcher.settings.bubbles, LocalIconShape provides launcher.settings.iconShape, LocalBadges provides badges, LocalSelection provides selection,
+        LocalNewApps provides newApps, LocalOrbitBadges provides launcher.settings.orbitBadges, LocalMotion provides !launcher.lowPower,
+        LocalPageTransition provides if (launcher.lowPower) "classic" else launcher.settings.pageTransition,
         androidx.compose.ui.platform.LocalHapticFeedback provides if (launcher.settings.haptics) androidx.compose.ui.platform.LocalHapticFeedback.current else NoHaptics) {
         Box(Modifier.fillMaxSize()) {
             HoloBackground(launcher.settings.phoneWallpaper, launcher.settings.parallax && !launcher.lowPower)
@@ -246,9 +259,12 @@ fun PliApp(host: PliHost, signals: HostSignals) {
             if (launcher.loaded) BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout))) {
                 val wide = maxWidth >= 600.dp
                 val current = if (wide) Screen.INNER else Screen.COVER
-                SideEffect { if (screen != current) { screen = current; drag.clear() } }
+                SideEffect { if (screen != current) { screen = current; drag.clear(); if (current == Screen.INNER) mirror = null } }
                 val swipesOn = panel == Panel.NONE && menu == null && folder == null && !drag.active && !selection.active
-                if (wide) key("inner", launcher.settings.discover) { InnerHome(host, signals, today, drag, actions, swipesOn, showToday) }
+                // Half-folded with the hinge across the screen: tabletop layout.
+                val halfFolded = rememberHalfFolded(wide && launcher.settings.tabletop && onScreen && maxHeight > maxWidth)
+                if (wide && halfFolded) TabletopHome(launcher, today, onOpenApp = { a, r -> open(a, r) }, onOpenPackage = host::openPackage)
+                else if (wide) key("inner", launcher.settings.discover) { InnerHome(host, signals, today, drag, actions, swipesOn, showToday) }
                 else key("cover", launcher.settings.discover) { CoverHome(host, signals, today, drag, actions, swipesOn, showToday) }
             }
             // Bin at the top while dragging: a full-width bar over the clock, drop an icon on it to take it off the home screen.
@@ -312,6 +328,17 @@ fun PliApp(host: PliHost, signals: HostSignals) {
                 }, onClose = { panel = Panel.NONE })
             }
             FullPanel(panel == Panel.GUIDE) { m -> GestureGuide(m) { panel = Panel.SETTINGS } }
+            FullPanel(panel == Panel.DRAW) { m ->
+                DrawPad(launcher, m, onOpen = { a, r -> open(a, r) }, onSettings = { settingsStart = "Dessins"; panel = Panel.SETTINGS },
+                    onClose = { panel = Panel.NONE })
+            }
+            // Folded on a page the cover doesn't have: its apps, just this once.
+            val mirrored = mirror
+            if (mirrored != null && screen == Screen.COVER && panel == Panel.NONE && folder == null && menu == null) {
+                val apps = mirrored.mapNotNull(launcher.byId::get).filter { it.id !in launcher.layout.hidden }
+                if (apps.isEmpty()) SideEffect { mirror = null }
+                else MirrorSheet(apps, onOpen = { a, r -> open(a, r) }, onClose = { mirror = null })
+            }
             FullPanel(panel == Panel.ONBOARDING || (launcher.loaded && !launcher.settings.onboarded && panel == Panel.NONE)) { m ->
                 Onboarding(launcher, signals.isDefaultHome, today.notificationsAllowed, m,
                     onMakeDefault = host::requestDefaultHome, onNotificationAccess = host::openNotificationAccess,
@@ -332,6 +359,7 @@ fun PliApp(host: PliHost, signals: HostSignals) {
                         onWeatherChanged = { weatherTick++ },
                         onExport = host::exportBackup, onImport = host::importBackup,
                         onGuide = { panel = Panel.GUIDE }, onOnboarding = { panel = Panel.ONBOARDING },
+                        startOn = settingsStart,
                         accessibilityOn = PliAccessibility.enabled(context), onAccessibility = host::openAccessibilitySettings)
                 }
             }
@@ -418,6 +446,8 @@ class HomeActions(
     val settings: () -> Unit,
     val gesture: (String) -> Unit,
     val read: (Article) -> Unit,
+    val continuity: Continuity,
+    val mirror: (List<String>) -> Unit,
 )
 
 /** A full-screen frosted panel that slides up (search, all apps, settings, widgets). */
@@ -478,6 +508,7 @@ private fun CoverHome(host: PliHost, signals: HostSignals, today: TodayState, dr
             val metrics = gridMetrics(maxWidth, maxHeight - headerHeight - 18.dp, s.labels, wide = false, s.coverColumns, s.coverRows)
             val pages = maxOf(launcher.layout.coverPages, (items.size + metrics.capacity - 1) / metrics.capacity, 1)
             SideEffect { homePages = pages; launcher.useGrid(Screen.COVER, Grid(metrics.columns, metrics.rows)) }
+            ContinuityEffect(Screen.COVER, launcher, actions.continuity, pager, lead, items, metrics.capacity, pages, actions.mirror)
             Column(Modifier.fillMaxSize()) {
                 HomePages(Screen.COVER, launcher, items, metrics, pager, lead, drag, s.labels, Modifier.weight(1f),
                     onOpenApp = { a, r -> actions.open(a, r) }, onOpenFolder = actions.openFolder,
@@ -490,12 +521,15 @@ private fun CoverHome(host: PliHost, signals: HostSignals, today: TodayState, dr
             val shown = if (lead == 0) 1f else (position - (lead - 1)).coerceIn(0f, 1f)
             if (shown > 0f) {
                 val widthPx = with(density) { maxWidth.toPx() }
-                ClockHeader(today, 84.sp, compact = false,
-                    Modifier.graphicsLayer { alpha = shown; translationX = (1f - shown) * widthPx }
-                        .onSizeChanged { with(density) { headerHeight = it.height.toDp() + 10.dp } }
-                        .padding(start = 22.dp, end = 22.dp, top = 10.dp), onWeather = {},
-                    trailing = if (launcher.settings.headerSearch != "none") ({ HeaderSearch(launcher.settings.headerSearch, actions.search) }) else null,
-                    nowPlaying = nowPlaying, onOpenPlaying = { host.openPackage(it) })
+                val suggestion = rememberSuggestion(launcher, today, launcher.visibleDock(Screen.COVER).toSet())
+                Column(Modifier.graphicsLayer { alpha = shown; translationX = (1f - shown) * widthPx }
+                    .onSizeChanged { with(density) { headerHeight = it.height.toDp() + 10.dp } }
+                    .padding(start = 22.dp, end = 22.dp, top = 10.dp)) {
+                    ClockHeader(today, 84.sp, compact = false, Modifier, onWeather = {},
+                        trailing = if (launcher.settings.headerSearch != "none") ({ HeaderSearch(launcher.settings.headerSearch, actions.search) }) else null,
+                        nowPlaying = nowPlaying, onOpenPlaying = { host.openPackage(it) })
+                    if (suggestion != null) SuggestionRow(suggestion, 38.dp, { a, r -> actions.open(a, r) }, Modifier.padding(top = 10.dp))
+                }
             }
         }
         if (!signals.isDefaultHome) DefaultHomeBanner(host::requestDefaultHome, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp))
@@ -527,12 +561,15 @@ private fun InnerHome(host: PliHost, signals: HostSignals, today: TodayState, dr
                 .homeSwipes(swipesOn, { drag.source != null || pager.currentPage < lead }, { swipeUp(drag, actions) }, { swipeDown(host, actions, it) }, { up -> actions.gesture(if (up) launcher.settings.twoFingerUp else launcher.settings.twoFingerDown) })) {
                 ClockHeader(today, 66.sp, compact = true, Modifier.padding(start = 26.dp, end = 22.dp, top = 14.dp), onWeather = {},
                     trailing = if (launcher.settings.headerSearch != "none") ({ HeaderSearch(launcher.settings.headerSearch, actions.search) }) else null)
+                val suggestion = rememberSuggestion(launcher, today, launcher.visibleDock(Screen.INNER).toSet())
+                if (suggestion != null) SuggestionRow(suggestion, 40.dp, { a, r -> actions.open(a, r) }, Modifier.padding(start = 26.dp, end = 22.dp, top = 12.dp))
                 Spacer(Modifier.height(16.dp))
                 BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
                     val s = launcher.settings
                     val metrics = gridMetrics(maxWidth - 16.dp, maxHeight - 18.dp, s.labels, wide = true, s.innerColumns, s.innerRows)
                     val pages = maxOf(launcher.layout.innerPages, (items.size + metrics.capacity - 1) / metrics.capacity, 1)
                     SideEffect { homePages = pages; launcher.useGrid(Screen.INNER, Grid(metrics.columns, metrics.rows)) }
+                    ContinuityEffect(Screen.INNER, launcher, actions.continuity, pager, lead, items, metrics.capacity, pages, actions.mirror)
                     Column(Modifier.fillMaxSize()) {
                         HomePages(Screen.INNER, launcher, items, metrics, pager, lead, drag, s.labels, Modifier.weight(1f).padding(horizontal = 8.dp),
                             onOpenApp = { a, r -> actions.open(a, r) }, onOpenFolder = actions.openFolder,

@@ -228,6 +228,41 @@ fun gridMetrics(width: Dp, height: Dp, labels: Boolean, wide: Boolean, columns: 
     return GridMetrics(cols, rowCount, icon, cell)
 }
 
+/** Page change effect chosen in the settings (see [PAGE_TRANSITIONS]). */
+val LocalPageTransition = androidx.compose.runtime.staticCompositionLocalOf { "classic" }
+
+val PAGE_TRANSITIONS = listOf("classic" to "Classique", "depth" to "Profondeur", "cube" to "Cube", "fade" to "Fondu", "carousel" to "Carrousel")
+
+/**
+ * Moves a home page as it slides in or out. Only the layer changes (no re-layout), and a page at rest is left
+ * untouched so drops land where they should.
+ */
+fun Modifier.pageEffect(style: String, pager: PagerState, page: Int, enabled: Boolean): Modifier =
+    if (style == "classic" || !enabled) this else graphicsLayer {
+        val o = ((pager.currentPage - page) + pager.currentPageOffsetFraction).coerceIn(-1f, 1f)
+        if (o == 0f) return@graphicsLayer
+        val a = kotlin.math.abs(o)
+        when (style) {
+            "depth" -> if (o > 0f) {
+                translationX = size.width * o
+                val sc = .78f + .22f * (1f - a)
+                scaleX = sc; scaleY = sc; alpha = 1f - a
+            }
+            "cube" -> {
+                cameraDistance = 14f * density
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(if (o > 0f) 1f else 0f, .5f)
+                rotationY = -o * 70f
+                alpha = 1f - a * .35f
+            }
+            "fade" -> { translationX = size.width * o; alpha = 1f - a }
+            "carousel" -> {
+                val sc = 1f - .2f * a
+                scaleX = sc; scaleY = sc; rotationY = o * 22f; alpha = 1f - a * .45f
+                cameraDistance = 12f * density
+            }
+        }
+    }
+
 /** The swipeable home pages of one screen: icons flow in order and fill each page. */
 @Composable
 fun HomePages(
@@ -267,12 +302,14 @@ fun HomePages(
         }
     }
 
+    val transition = LocalPageTransition.current
     HorizontalPager(pager, modifier.onGloballyPositioned { drag.gridRect = it.boundsInRoot() },
         beyondViewportPageCount = 8, key = { it }) { page ->
         if (page < pageOffset) { leadingPage?.invoke(page); return@HorizontalPager }
         val homePage = page - pageOffset
         val first = homePage * metrics.capacity
-        BoxWithConstraints(Modifier.fillMaxSize().padding(start = 8.dp, end = 8.dp, top = topPadding)) {
+        BoxWithConstraints(Modifier.fillMaxSize().pageEffect(transition, pager, page, enabled = !drag.active)
+            .padding(start = 8.dp, end = 8.dp, top = topPadding)) {
             val cw = maxWidth / metrics.columns
             val ch = metrics.cellHeight
             for (row in 0 until metrics.rows) for (col in 0 until metrics.columns) {

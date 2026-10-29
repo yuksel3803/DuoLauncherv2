@@ -23,6 +23,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,6 +51,9 @@ import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Interests
 import androidx.compose.material.icons.rounded.Category
+import androidx.compose.material.icons.rounded.ColorLens
+import androidx.compose.material.icons.rounded.Devices
+import androidx.compose.material.icons.rounded.Gesture
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material.icons.rounded.Palette
@@ -126,12 +130,13 @@ private fun ChoiceRow(title: String, detail: String?, options: List<Int>, select
 }
 
 private enum class SettingsCategory(val label: String, val icon: ImageVector, val subs: List<Pair<String, ImageVector>>) {
-    THEMES("Thèmes", Icons.Rounded.Palette, listOf("Fond" to Icons.Rounded.Wallpaper, "Icônes" to Icons.Rounded.Category, "Forme" to Icons.Rounded.Interests, "Animations" to Icons.Rounded.AutoAwesome)),
+    THEMES("Thèmes", Icons.Rounded.Palette, listOf("Fond" to Icons.Rounded.Wallpaper, "Couleurs" to Icons.Rounded.ColorLens, "Icônes" to Icons.Rounded.Category, "Forme" to Icons.Rounded.Interests, "Animations" to Icons.Rounded.AutoAwesome)),
     HOME("Accueil", Icons.Rounded.PhoneAndroid, listOf("Grille" to Icons.Rounded.GridView, "Dock" to Icons.Rounded.Dock,
-        "Horloge" to Icons.Rounded.Schedule, "Pages" to Icons.Rounded.ViewCarousel)),
+        "Horloge" to Icons.Rounded.Schedule, "Pages" to Icons.Rounded.ViewCarousel, "Suggestions" to Icons.Rounded.AutoAwesome,
+        "Pliage" to Icons.Rounded.Devices)),
     APPS("Applis", Icons.Rounded.Apps, listOf("Masquées" to Icons.Rounded.VisibilityOff, "Ajout" to Icons.Rounded.AddToHomeScreen)),
     WIDGETS("Widgets", Icons.Rounded.Widgets, listOf("Météo" to Icons.Rounded.WbSunny, "Notifications" to Icons.Rounded.Notifications)),
-    GESTURES("Gestes", Icons.Rounded.Swipe, listOf("Gestes" to Icons.Rounded.TouchApp)),
+    GESTURES("Gestes", Icons.Rounded.Swipe, listOf("Gestes" to Icons.Rounded.TouchApp, "Dessins" to Icons.Rounded.Gesture)),
     GENERAL("Paramètres", Icons.Rounded.Settings, listOf("Général" to Icons.Rounded.Tune, "Sauvegarde" to Icons.Rounded.Backup, "Mises à jour" to Icons.Rounded.SystemUpdate)),
 }
 
@@ -198,9 +203,14 @@ fun SettingsPanel(
     onClose: () -> Unit, onMakeDefault: () -> Unit, onNotificationAccess: () -> Unit, onLocation: () -> Unit,
     onWeatherChanged: () -> Unit,
     onExport: () -> Unit = {}, onImport: () -> Unit = {}, accessibilityOn: Boolean = false, onAccessibility: () -> Unit = {},
-    onGuide: () -> Unit = {}, onOnboarding: () -> Unit = {},
+    onGuide: () -> Unit = {}, onOnboarding: () -> Unit = {}, startOn: String? = null,
 ) {
     var picking by remember { mutableStateOf<String?>(null) }
+    var pickFor by remember { mutableStateOf<((AppInfo) -> Unit)?>(null) }
+    pickFor?.let { callback ->
+        AppPick(launcher, modifier, onClose = { pickFor = null }) { app -> callback(app); pickFor = null }
+        return
+    }
     picking?.let { which ->
         AppPick(launcher, modifier, onClose = { picking = null }) { app ->
             launcher.updateSettings { when (which) {
@@ -214,6 +224,11 @@ fun SettingsPanel(
     }
     var category by rememberSaveable { mutableStateOf(if (isDefaultHome) SettingsCategory.THEMES else SettingsCategory.GENERAL) }
     var sub by rememberSaveable { mutableStateOf(category.subs.first().first) }
+    // Opened from elsewhere on a given page (e.g. "Mes dessins" from the drawing pad).
+    LaunchedEffect(startOn) {
+        val target = startOn ?: return@LaunchedEffect
+        SettingsCategory.entries.firstOrNull { c -> c.subs.any { it.first == target } }?.let { category = it; sub = target }
+    }
     val options: @Composable (Modifier) -> Unit = { m ->
         Column(m.clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)).background(Holo.Panel.copy(alpha = .96f))
             .border(1.dp, Holo.edgeBrush, RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)).padding(top = 18.dp)) {
@@ -223,7 +238,7 @@ fun SettingsPanel(
             Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 SettingsOptions(category, sub, launcher, isDefaultHome, badgesAllowed, onMakeDefault, onNotificationAccess, onLocation,
                     onWeatherChanged, onExport, onImport, accessibilityOn, onAccessibility, onPick = { picking = it },
-                    onGuide = onGuide, onOnboarding = onOnboarding)
+                    onGuide = onGuide, onOnboarding = onOnboarding, onPickApp = { pickFor = it })
                 Spacer(Modifier.height(24.dp))
             }
         }
@@ -268,7 +283,7 @@ private fun SettingsOptions(
     category: SettingsCategory, sub: String, launcher: Launcher, isDefaultHome: Boolean, badgesAllowed: Boolean,
     onMakeDefault: () -> Unit, onNotificationAccess: () -> Unit, onLocation: () -> Unit, onWeatherChanged: () -> Unit,
     onExport: () -> Unit, onImport: () -> Unit, accessibilityOn: Boolean, onAccessibility: () -> Unit, onPick: (String) -> Unit,
-    onGuide: () -> Unit = {}, onOnboarding: () -> Unit = {},
+    onGuide: () -> Unit = {}, onOnboarding: () -> Unit = {}, onPickApp: ((AppInfo) -> Unit) -> Unit = {},
 ) {
     val s = launcher.settings
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -279,6 +294,37 @@ private fun SettingsOptions(
             ToggleRow("Halos animés", "Les couleurs bougent quand tu inclines le téléphone", s.parallax) { v -> launcher.updateSettings { it.copy(parallax = v) } }
             ActionRow("Changer le fond d’écran du téléphone", "Utilisé quand le fond holographique est coupé", "Ouvrir") {
                 runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_SET_WALLPAPER).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            }
+        }
+        SettingsCategory.THEMES to "Couleurs" -> {
+            Section("Palette") {
+                Text("Les dégradés, les halos et les reflets prennent ces couleurs.", color = Holo.Muted, fontSize = 12.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                Row(Modifier.padding(12.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    PALETTES.forEach { (key, name) ->
+                        val on = s.palette == key
+                        val sample = if (key == "wallpaper") remember { wallpaperPalette(context) } else null
+                        val colors = when (key) { "wallpaper" -> sample?.let { listOf(it.a, it.b, it.c) } ?: listOf(Holo.Muted, Holo.Soft, Holo.Muted)
+                            "aurore" -> listOf(Color(0xFFFFD3A5), Color(0xFFFF9EC7), Color(0xFFC9A7FF))
+                            "ocean" -> listOf(Color(0xFF8FF0FF), Color(0xFF8FBEFF), Color(0xFF9CFFD9))
+                            "braise" -> listOf(Color(0xFFFFC27A), Color(0xFFFF9A8A), Color(0xFFFF8FC0))
+                            "menthe" -> listOf(Color(0xFFB5FFCB), Color(0xFF8CF5E6), Color(0xFFD9FF9E))
+                            else -> listOf(Color(0xFF9BE7FF), Color(0xFFC7A6FF), Color(0xFFFFB3D9)) }
+                        Column(Modifier.clip(RoundedCornerShape(16.dp)).clickable { launcher.updateSettings { it.copy(palette = key) } }
+                            .then(if (on) Modifier.glass(RoundedCornerShape(16.dp), .12f) else Modifier).padding(8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(Modifier.size(44.dp).clip(CircleShape).background(Brush.linearGradient(colors), CircleShape)
+                                .border(if (on) 2.dp else 1.dp, if (on) Holo.Ink else Color.White.copy(alpha = .2f), CircleShape))
+                            Text(name, color = if (on) Holo.Violet else Holo.Soft, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+                        }
+                    }
+                }
+            }
+            Section("Jour et nuit") {
+                ToggleRow("Ambiance automatique", "Plus lumineux le jour, noir profond la nuit (selon le lever et le coucher du soleil)",
+                    s.dayNight == "auto") { v -> launcher.updateSettings { it.copy(dayNight = if (v) "auto" else "off") } }
+                ToggleRow("Halos vivants", "Les halos suivent l’heure (aube rose, midi bleu, crépuscule orangé) et pâlissent quand la batterie baisse",
+                    s.livingHalos) { v -> launcher.updateSettings { it.copy(livingHalos = v) } }
             }
         }
         SettingsCategory.THEMES to "Icônes" -> {
@@ -321,6 +367,10 @@ private fun SettingsOptions(
             Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 choices.forEach { (key, name) -> PillButton(name, highlighted = s.launchAnimation == key) { launcher.updateSettings { it.copy(launchAnimation = key) } } }
             }
+            Text("CHANGEMENT DE PAGE", color = Holo.Muted, fontSize = 11.sp, letterSpacing = 2.5.sp, modifier = Modifier.padding(start = 16.dp, top = 12.dp))
+            Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                PAGE_TRANSITIONS.forEach { (key, name) -> PillButton(name, highlighted = s.pageTransition == key) { launcher.updateSettings { it.copy(pageTransition = key) } } }
+            }
         }
         SettingsCategory.HOME to "Grille" -> {
             Section("Écran externe") {
@@ -350,6 +400,31 @@ private fun SettingsOptions(
             ToggleRow("Page Actus", "Tout à gauche : Google Actualités, Le Monde, franceinfo", s.discover) { v -> launcher.updateSettings { it.copy(discover = v) } }
             ToggleRow("Ajouter les nouvelles applis", "Une appli installée apparaît sur les deux écrans", s.addNewApps) { v -> launcher.updateSettings { it.copy(addNewApps = v) } }
         }
+        SettingsCategory.HOME to "Suggestions" -> {
+            Section("Suggestions sous l’horloge") {
+                Text("Une rangée d’applis qui change selon le moment : en voiture, casque branché, rendez-vous proche, avant de dormir…",
+                    color = Holo.Muted, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("always" to "Toujours", "context" to "Seulement en situation", "off" to "Jamais").forEach { (key, name) ->
+                        PillButton(name, highlighted = s.suggestions == key) { launcher.updateSettings { it.copy(suggestions = key) } }
+                    }
+                }
+                Text("« Toujours » montre aussi les applis que tu ouvres d’habitude à cette heure-ci. La voiture est reconnue par son Bluetooth (autorisation « Appareils à proximité »).",
+                    color = Holo.Muted, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+            }
+            Section("Nouvelles applis") {
+                ToggleRow("Pastille « Nouveau »", "Une perle verte sur les applis installées cette semaine, jusqu’à leur première ouverture", s.newBadge) { v ->
+                    launcher.updateSettings { it.copy(newBadge = v) } }
+            }
+        }
+        SettingsCategory.HOME to "Pliage" -> Section("Plier et déplier") {
+            ToggleRow("Continuité", "En dépliant ou en repliant, l’autre écran s’ouvre sur la page qui contient les mêmes applis", s.continuity) { v ->
+                launcher.updateSettings { it.copy(continuity = v) } }
+            ToggleRow("Écran externe miroir", "Replié sur une page que l’écran externe n’a pas : ses applis s’affichent quand même, le temps d’en ouvrir une",
+                s.coverMirror) { v -> launcher.updateSettings { it.copy(coverMirror = v) } }
+            ToggleRow("Mode chevalet", "À moitié plié et tourné (comme un petit ordinateur) : horloge et musique en haut, commandes en bas",
+                s.tabletop) { v -> launcher.updateSettings { it.copy(tabletop = v) } }
+        }
         SettingsCategory.APPS to "Masquées" -> Section("Applis masquées") {
             val hidden = launcher.layout.hidden.toList()
             if (hidden.isEmpty()) Text("Aucune. Maintiens une appli puis « Masquer l’appli ».", color = Holo.Muted, fontSize = 13.sp, modifier = Modifier.padding(16.dp))
@@ -372,6 +447,11 @@ private fun SettingsOptions(
         SettingsCategory.WIDGETS to "Notifications" -> Section("Notifications") {
             ActionRow("Pastilles, aperçus et musique en cours", if (badgesAllowed) "Accès aux notifications activé" else "Demande l’accès aux notifications",
                 if (badgesAllowed) "Ouvrir" else "Activer", onNotificationAccess)
+            ToggleRow("Notifications en orbite", "Les messages non lus tournent autour de l’icône en petites bulles ; plus il y en a, plus elles vont vite",
+                s.orbitBadges) { v -> launcher.updateSettings { it.copy(orbitBadges = v) } }
+        }
+        SettingsCategory.GESTURES to "Dessins" -> Section("Dessiner pour lancer") {
+            Column(Modifier.padding(10.dp)) { DrawingsSettings(launcher, onPickApp) }
         }
         SettingsCategory.GESTURES to "Gestes" -> Section("Gestes sur l’accueil") {
             ActionRow("Guide des gestes", "Tous les gestes de Fold Launcher Pro expliqués", "Voir", onGuide)
@@ -453,7 +533,7 @@ internal fun WeatherSettings(launcher: Launcher, onLocation: () -> Unit, onWeath
 }
 
 private val GESTURE_ACTIONS = listOf("none" to "Rien", "lock" to "Verrouiller", "notifications" to "Notifications",
-    "search" to "Recherche", "drawer" to "Toutes les applis")
+    "search" to "Recherche", "drawer" to "Toutes les applis", "draw" to "Dessiner pour lancer")
 
 @Composable
 private fun GestureRow(title: String, value: String, launcher: Launcher, onPick: () -> Unit, onSelect: (String) -> Unit) {

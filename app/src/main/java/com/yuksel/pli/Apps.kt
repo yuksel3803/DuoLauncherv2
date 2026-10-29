@@ -39,6 +39,10 @@ data class AppInfo(
     val user: UserHandle,
     val work: Boolean,
     val icon: ImageBitmap,
+    /** Android's app category (ApplicationInfo.CATEGORY_AUDIO, CATEGORY_MAPS…), -1 when undefined. */
+    val category: Int = -1,
+    /** When the app was first installed (ms). */
+    val installedAt: Long = 0L,
 ) {
     /** Lower-case label without accents, for search. */
     val searchKey: String = label.normalizedForSearch()
@@ -106,7 +110,8 @@ class AppRepository(private val context: Context) {
             bitmap
         }
         return AppInfo(id, info.label?.toString()?.takeIf { it.isNotBlank() } ?: info.componentName.packageName,
-            info.componentName.packageName, info.componentName, user, work, icon)
+            info.componentName.packageName, info.componentName, user, work, icon,
+            runCatching { info.applicationInfo.category }.getOrDefault(-1), runCatching { info.firstInstallTime }.getOrDefault(0L))
     }
 
     /** Calls [onChange] with the package name and [ADDED], [REMOVED] or [CHANGED]. */

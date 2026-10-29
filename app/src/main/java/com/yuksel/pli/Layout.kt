@@ -26,7 +26,12 @@ data class TodayItem(val key: String, val kind: String, val widgetId: Int = -1, 
         const val TOGGLES = "toggles"
         const val TASKS = "tasks"
         const val SCREEN_TIME = "screentime"
+        const val COUNTDOWN = "countdown"
+        const val MEMORY = "memory"
+        const val TRIP = "trip"
         val BUILT_IN = listOf(WEATHER, AGENDA, MEDIA, BATTERY, NOTE, TOGGLES, TASKS, SCREEN_TIME)
+        /** Every built-in card the picker offers (the last ones are not on the page by default). */
+        val ALL = BUILT_IN + listOf(TRIP, COUNTDOWN, MEMORY)
     }
 }
 

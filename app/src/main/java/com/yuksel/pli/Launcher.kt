@@ -187,6 +187,16 @@ class Launcher(private val context: Context) {
 
     fun forgetLastLaunch() { lastLaunch = null }
 
+    private val selfInstalled by lazy {
+        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).firstInstallTime }.getOrDefault(0L)
+    }
+
+    /** Apps installed in the last 7 days (after Fold Launcher Pro itself) and not opened since. */
+    fun newApps(): Set<String> {
+        val since = maxOf(System.currentTimeMillis() - 7 * 86_400_000L, selfInstalled)
+        return apps.filter { it.installedAt > since && !UsageLog.openedSince(context, it.id, it.installedAt) }.map { it.id }.toSet()
+    }
+
     /** Reloads everything after a backup was imported. */
     suspend fun reloadAll() {
         settings = store.loadSettings()
@@ -267,6 +277,11 @@ object UsageLog {
             }
         }
         return out.mapNotNull { apps[it] }
+    }
+
+    /** True when [appId] was opened after [since]. */
+    fun openedSince(context: Context, appId: String, since: Long): Boolean = synchronized(this) {
+        all(context).any { it.first == appId && it.second >= since }
     }
 
     fun suggestions(context: Context, apps: Map<String, AppInfo>, count: Int): List<AppInfo> {

@@ -29,7 +29,8 @@ import androidx.compose.material.icons.rounded.Newspaper
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.PanTool
 import androidx.compose.material.icons.rounded.SwipeLeft
-import androidx.compose.material.icons.rounded.SwipeUp
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Gesture
 import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material.icons.rounded.VerticalSplit
 import androidx.compose.material.icons.rounded.ViewCarousel
@@ -53,6 +54,8 @@ private data class GestureHelp(val icon: ImageVector, val title: String, val tex
 private val GESTURES = listOf(
     GestureHelp(Icons.Rounded.KeyboardArrowDown, "Glisser vers le bas", "Ouvre la recherche (applis, calcul, contacts, raccourcis, web). Tout en haut de l’écran : les notifications."),
     GestureHelp(Icons.Rounded.KeyboardArrowUp, "Glisser vers le haut", "Ouvre la liste de toutes les applis. Glisse vers le bas pour la refermer."),
+    GestureHelp(Icons.Rounded.Search, "Écrire une action dans la recherche", "« minuteur 10 min », « alarme 7h », « rappel pain », « 5 miles en km », « 20 € en dollars », « appeler Maman »."),
+    GestureHelp(Icons.Rounded.Gesture, "Dessiner pour lancer", "Trace la forme enregistrée pour une appli (Réglages → Gestes → Dessins)."),
     GestureHelp(Icons.Rounded.TouchApp, "Appui long sur une appli", "Raccourcis, aperçu des notifications, renommer, changer l’icône, protéger, masquer…"),
     GestureHelp(Icons.Rounded.PanTool, "Appui long puis glisser", "Déplace l’appli dans la case de ton choix ; garde-la au bord de l’écran pour changer de page."),
     GestureHelp(Icons.Rounded.CreateNewFolder, "Lâcher une appli sur une autre", "Crée un dossier. Appui long sur le dossier pour le mettre en grand (2×2, toute la largeur…)."),

@@ -23,8 +23,10 @@ enum class Sky { CLEAR, PARTLY, CLOUDY, FOG, DRIZZLE, RAIN, SNOW, STORM }
 
 data class HourForecast(val hour: Int, val temperature: Int, val sky: Sky)
 data class Weather(val place: String, val temperature: Int, val label: String, val sky: Sky,
-    val high: Int?, val low: Int?, val hours: List<HourForecast>)
-data class AgendaEvent(val title: String, val start: LocalDateTime, val end: LocalDateTime, val allDay: Boolean, val color: Int)
+    val high: Int?, val low: Int?, val hours: List<HourForecast>,
+    val sunrise: java.time.LocalTime? = null, val sunset: java.time.LocalTime? = null)
+data class AgendaEvent(val title: String, val start: LocalDateTime, val end: LocalDateTime, val allDay: Boolean, val color: Int,
+    val location: String = "")
 data class BatteryInfo(val level: Int, val charging: Boolean)
 
 private fun skyOf(code: Int): Pair<String, Sky> = when (code) {
@@ -68,7 +70,7 @@ suspend fun loadWeather(context: Context, settings: PliSettings): Weather? = wit
     runCatching {
         val json = httpJson("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon" +
             "&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code" +
-            "&daily=temperature_2m_max,temperature_2m_min&forecast_days=2&timezone=auto")
+            "&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&forecast_days=2&timezone=auto")
         val current = json.getJSONObject("current")
         val daily = json.optJSONObject("daily")
         val (label, sky) = skyOf(current.getInt("weather_code"))
@@ -87,7 +89,9 @@ suspend fun loadWeather(context: Context, settings: PliSettings): Weather? = wit
         }
         Weather(settings.city.ifBlank { "Ici" }, current.getDouble("temperature_2m").roundToInt(), label, sky,
             daily?.optJSONArray("temperature_2m_max")?.optDouble(0)?.takeUnless(Double::isNaN)?.roundToInt(),
-            daily?.optJSONArray("temperature_2m_min")?.optDouble(0)?.takeUnless(Double::isNaN)?.roundToInt(), hours)
+            daily?.optJSONArray("temperature_2m_min")?.optDouble(0)?.takeUnless(Double::isNaN)?.roundToInt(), hours,
+            daily?.optJSONArray("sunrise")?.optString(0)?.let { runCatching { LocalDateTime.parse(it).toLocalTime() }.getOrNull() },
+            daily?.optJSONArray("sunset")?.optString(0)?.let { runCatching { LocalDateTime.parse(it).toLocalTime() }.getOrNull() })
     }.getOrNull()
 }
 
@@ -102,7 +106,8 @@ suspend fun loadEvents(context: Context, max: Int = 4): List<AgendaEvent> = with
         val uri = CalendarContract.Instances.CONTENT_URI.buildUpon()
             .appendPath((now - 12 * 3_600_000L).toString()).appendPath((now + 24 * 3_600_000L).toString()).build()
         val projection = arrayOf(CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN,
-            CalendarContract.Instances.END, CalendarContract.Instances.ALL_DAY, CalendarContract.Instances.DISPLAY_COLOR)
+            CalendarContract.Instances.END, CalendarContract.Instances.ALL_DAY, CalendarContract.Instances.DISPLAY_COLOR,
+            CalendarContract.Instances.EVENT_LOCATION)
         val result = ArrayList<AgendaEvent>()
         context.contentResolver.query(uri, projection, null, null, "${CalendarContract.Instances.BEGIN} ASC")?.use { cursor ->
             while (cursor.moveToNext() && result.size < max) {
@@ -111,7 +116,7 @@ suspend fun loadEvents(context: Context, max: Int = 4): List<AgendaEvent> = with
                 val zone = if (allDay) ZoneId.of("UTC") else ZoneId.systemDefault()
                 result += AgendaEvent(cursor.getString(0)?.takeIf { it.isNotBlank() } ?: "Sans titre",
                     LocalDateTime.ofInstant(Instant.ofEpochMilli(begin), zone),
-                    LocalDateTime.ofInstant(Instant.ofEpochMilli(end), zone), allDay, cursor.getInt(4))
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(end), zone), allDay, cursor.getInt(4), cursor.getString(5)?.trim() ?: "")
             }
         }
         result

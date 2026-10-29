@@ -3,6 +3,35 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 18 — Un launcher qui s’adapte
+
+**Pliage**
+- **Continuité** : en dépliant ou en repliant, l’autre écran s’ouvre sur la page qui contient les mêmes applis (et la page Actus si tu y étais).
+- **Écran externe miroir** : replié depuis une page de l’écran interne que l’écran externe n’a pas, ses applis s’affichent dans une fenêtre sur l’écran externe, le temps d’en ouvrir une.
+- **Mode chevalet** : à moitié plié et tourné comme un petit ordinateur (capteur de charnière), l’écran du haut montre l’heure et la musique, celui du bas de grosses commandes, le prochain rendez-vous et le dock.
+
+**Plus intelligent**
+- **Suggestions sous l’horloge** : en voiture (Bluetooth de la voiture) Maps et musique ; casque branché, musique et vidéo ; rendez-vous avec une adresse dans l’heure, Maps ; le soir en charge, le réveil ; sinon les applis habituelles de ce moment. Mode « Toujours », « Seulement en situation » ou « Jamais ».
+- **Actions dans la recherche** : minuteur, alarme, rappel (ajouté à la carte Rappels), conversions d’unités (distance, poids, volume, vitesse, température, données, durée), devises (taux de la BCE), appeler ou écrire à un contact. Entrée lance la première action.
+- **Pastille « Nouveau »** : une perle verte sur les applis installées dans la semaine, jusqu’à leur première ouverture.
+
+**Ton style**
+- **Palettes de couleurs** : Holographique, Fond d’écran (couleurs tirées de ton fond d’écran, mises à jour quand il change), Aurore, Océan, Braise, Menthe.
+- **Ambiance jour et nuit** : plus lumineux le jour, noir profond la nuit, selon le lever et le coucher du soleil de ta ville.
+- **Halos vivants** : aube rose, midi bleu, crépuscule orangé, nuit violette ; ils pâlissent quand la batterie baisse.
+- **Effets de changement de page** : Classique, Profondeur, Cube, Fondu, Carrousel.
+
+**Nouveaux gestes et pastilles**
+- **Dessiner pour lancer** : enregistre une forme par appli (un W pour WhatsApp…), puis trace-la sur le tableau ouvert par un geste (deux doigts vers le haut par défaut s’il est libre).
+- **Notifications en orbite** : les messages non lus deviennent des bulles qui tournent autour de l’icône, plus vite quand il y en a beaucoup.
+
+**Page Aujourd’hui**
+- **Prochain trajet** : le prochain rendez-vous avec une adresse et le bouton « Itinéraire ».
+- **Compte à rebours** : J-12 avant les vacances, un anniversaire…
+- **Souvenir du jour** : une photo prise à cette date les années précédentes.
+
+Tout se règle dans Réglages : Thèmes → Couleurs et Animations, Accueil → Suggestions et Pliage, Gestes → Dessins, Widgets → Notifications.
+
 ## Build 17 — Optimisation et mises à jour intégrées
 
 - **Mises à jour intégrées** : une fenêtre s'affiche quand une nouvelle version sort, avec les nouveautés et un bouton « Mettre à jour ». Réglages → Paramètres → Mises à jour pour vérifier à la main, désactiver la vérification automatique ou ouvrir ce journal.

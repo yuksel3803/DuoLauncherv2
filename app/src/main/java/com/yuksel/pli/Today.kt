@@ -153,6 +153,9 @@ fun TodayColumn(
                 TodayItem.TOGGLES -> TogglesCard(onPermission)
                 TodayItem.TASKS -> TasksCard()
                 TodayItem.SCREEN_TIME -> ScreenTimeCard(launcher, today.refreshCount)
+                TodayItem.COUNTDOWN -> CountdownCard()
+                TodayItem.MEMORY -> MemoryCard(onPermission)
+                TodayItem.TRIP -> TripCard(today, onPermission)
                 TodayItem.KIND_ANDROID -> AndroidWidgetCard(widgets, item)
             }
         }
@@ -216,6 +219,9 @@ fun cardTitle(item: TodayItem, widgets: Widgets): String = when (item.kind) {
     TodayItem.TOGGLES -> "Raccourcis"
     TodayItem.TASKS -> "Rappels"
     TodayItem.SCREEN_TIME -> "Temps d’écran"
+    TodayItem.COUNTDOWN -> "Compte à rebours"
+    TodayItem.MEMORY -> "Souvenir du jour"
+    TodayItem.TRIP -> "Prochain trajet"
     else -> widgets.info(item.widgetId)?.let(widgets::label) ?: "Widget"
 }
 
@@ -258,12 +264,12 @@ fun PillButton(text: String, highlighted: Boolean = false, onClick: () -> Unit) 
 }
 
 @Composable
-private fun CardLabel(text: String) {
+internal fun CardLabel(text: String) {
     Text(text.uppercase(), color = Holo.Muted, fontSize = 11.sp, letterSpacing = 2.5.sp)
 }
 
 @Composable
-private fun HintCard(title: String, text: String, action: String?, onAction: (() -> Unit)?) {
+internal fun HintCard(title: String, text: String, action: String?, onAction: (() -> Unit)?) {
     Column(Modifier.fillMaxWidth().glass(cardShape, .05f).padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         CardLabel(title)
         Text(text, color = Holo.Soft, fontSize = 14.sp)
@@ -400,7 +406,7 @@ private fun AndroidWidgetCard(widgets: Widgets, item: TodayItem) {
 fun WidgetPicker(launcher: Launcher, widgets: Widgets, modifier: Modifier, onPickBuiltIn: (String) -> Unit,
     onPickAndroid: (AppWidgetProviderInfo) -> Unit, onClose: () -> Unit) {
     val present = launcher.layout.today.map { it.kind }.toSet()
-    val builtIns = TodayItem.BUILT_IN.filter { it !in present }
+    val builtIns = TodayItem.ALL.filter { it !in present }
     val groups = remember { widgets.providers().groupBy { widgets.appLabel(it) }.toSortedMap(String.CASE_INSENSITIVE_ORDER) }
     Column(modifier) {
         Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {

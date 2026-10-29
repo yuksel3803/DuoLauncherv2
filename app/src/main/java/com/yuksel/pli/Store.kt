@@ -36,6 +36,25 @@ data class PliSettings(
     /** Below 20 % (not charging): no moving halos, no launch effect. */
     val batterySaver: Boolean = true,
     val onboarded: Boolean = false,
+    /** Folding or unfolding opens the other screen on the matching page. */
+    val continuity: Boolean = true,
+    /** Folding on a page the cover doesn't have shows its apps on the cover ("miroir"). */
+    val coverMirror: Boolean = true,
+    /** Suggestions row: "always", "context" (headphones, car…) or "off". */
+    val suggestions: String = "always",
+    val newBadge: Boolean = true,
+    /** Accent colours: "holo", "wallpaper", "aurore", "ocean", "braise", "menthe". */
+    val palette: String = "holo",
+    /** "auto": brighter by day, darker and warmer at night (sunrise/sunset); "off". */
+    val dayNight: String = "auto",
+    /** Halos follow the hour (dawn, noon, dusk, night) and fade with the battery. */
+    val livingHalos: Boolean = false,
+    /** Page change effect: "classic", "depth", "cube", "fade", "carousel". */
+    val pageTransition: String = "classic",
+    /** Half-folded in landscape: clock and music on top, controls below. */
+    val tabletop: Boolean = true,
+    /** Unread notifications as bubbles orbiting the icon instead of a number. */
+    val orbitBadges: Boolean = false,
 )
 
 /** Saves the layout, the settings and the quick note in private preferences. */
@@ -79,6 +98,16 @@ class Store(context: Context) {
         haptics = prefs.getBoolean("haptics", true),
         batterySaver = prefs.getBoolean("batterySaver", true),
         onboarded = prefs.getBoolean("onboarded", false),
+        continuity = prefs.getBoolean("continuity", true),
+        coverMirror = prefs.getBoolean("coverMirror", true),
+        suggestions = prefs.getString("suggestions", "always") ?: "always",
+        newBadge = prefs.getBoolean("newBadge", true),
+        palette = prefs.getString("palette", "holo") ?: "holo",
+        dayNight = prefs.getString("dayNight", "auto") ?: "auto",
+        livingHalos = prefs.getBoolean("livingHalos", false),
+        pageTransition = prefs.getString("pageTransition", "classic") ?: "classic",
+        tabletop = prefs.getBoolean("tabletop", true),
+        orbitBadges = prefs.getBoolean("orbitBadges", false),
     )
 
     fun saveSettings(s: PliSettings) {
@@ -94,7 +123,11 @@ class Store(context: Context) {
             .putBoolean("lockLayout", s.lockLayout).putInt("recentInDock", s.recentInDock)
             .putString("iconShape", s.iconShape).putString("headerSearch", s.headerSearch)
             .putString("launchAnimation", s.launchAnimation).putBoolean("haptics", s.haptics)
-            .putBoolean("batterySaver", s.batterySaver).putBoolean("onboarded", s.onboarded).apply()
+            .putBoolean("batterySaver", s.batterySaver).putBoolean("onboarded", s.onboarded)
+            .putBoolean("continuity", s.continuity).putBoolean("coverMirror", s.coverMirror).putString("suggestions", s.suggestions)
+            .putBoolean("newBadge", s.newBadge).putString("palette", s.palette).putString("dayNight", s.dayNight)
+            .putBoolean("livingHalos", s.livingHalos).putString("pageTransition", s.pageTransition)
+            .putBoolean("tabletop", s.tabletop).putBoolean("orbitBadges", s.orbitBadges).apply()
     }
 
     /** Everything Pli saved (layout, settings, note) as one JSON document. Android widgets are left out: they belong to this phone. */

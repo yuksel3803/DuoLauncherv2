@@ -38,6 +38,13 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Alarm
+import androidx.compose.material.icons.rounded.Call
+import androidx.compose.material.icons.rounded.Checklist
+import androidx.compose.material.icons.rounded.CurrencyExchange
+import androidx.compose.material.icons.rounded.Sms
+import androidx.compose.material.icons.rounded.SwapHoriz
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.AirplanemodeActive
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.BatteryFull
@@ -230,7 +237,7 @@ private fun ResultRow(icon: ImageVector, title: String, subtitle: String, onClic
 }
 
 @Composable
-private fun AppChoice(app: AppInfo, size: androidx.compose.ui.unit.Dp, onOpen: (AppInfo, Rect) -> Unit, onHold: ((AppInfo, Rect) -> Unit)?) {
+internal fun AppChoice(app: AppInfo, size: androidx.compose.ui.unit.Dp, onOpen: (AppInfo, Rect) -> Unit, onHold: ((AppInfo, Rect) -> Unit)?) {
     var bounds by remember { mutableStateOf(Rect.Zero) }
     Column(Modifier.fillMaxWidth().onGloballyPositioned { bounds = it.boundsInRoot() }.clip(RoundedCornerShape(18.dp))
         .combinedClickable(onClick = { onOpen(app, bounds) }, onLongClick = onHold?.let { { it(app, bounds) } })
@@ -238,6 +245,16 @@ private fun AppChoice(app: AppInfo, size: androidx.compose.ui.unit.Dp, onOpen: (
         AppIcon(app, size)
         IconLabel(app.label)
     }
+}
+
+private fun quickIcon(kind: QuickActions.Kind): ImageVector = when (kind) {
+    QuickActions.Kind.TIMER -> Icons.Rounded.Timer
+    QuickActions.Kind.ALARM -> Icons.Rounded.Alarm
+    QuickActions.Kind.REMINDER -> Icons.Rounded.Checklist
+    QuickActions.Kind.CONVERT -> Icons.Rounded.SwapHoriz
+    QuickActions.Kind.CURRENCY -> Icons.Rounded.CurrencyExchange
+    QuickActions.Kind.CALL -> Icons.Rounded.Call
+    QuickActions.Kind.SMS -> Icons.Rounded.Sms
 }
 
 /** Spotlight-style search: calculator, apps, contacts, settings and the web. */
@@ -262,6 +279,29 @@ fun SearchPanel(launcher: Launcher, modifier: Modifier, onOpen: (AppInfo, Rect?)
     }
     val suggestions = remember(apps) { UsageLog.suggestions(context, launcher.byId, 8).ifEmpty { launcher.visibleDock(Screen.COVER).mapNotNull(launcher.byId::get) } }
     val calc = remember(query) { evaluateCalculation(query) }
+    // Direct actions: timer, alarm, reminder, conversions, currencies, call or text a contact.
+    val instant = remember(query) { QuickActions.instant(query) }
+    val contactQuery = remember(query) { QuickActions.contactQuery(query) }
+    val people by produceState(emptyList<QuickActions.Action>(), contactQuery) {
+        value = contactQuery?.let { (kind, name) -> QuickActions.people(context, name).map { QuickActions.contactAction(kind, it) } } ?: emptyList()
+    }
+    val money by produceState<QuickActions.Action?>(null, query) {
+        value = null
+        val q = QuickActions.currencyQuery(query) ?: return@produceState
+        kotlinx.coroutines.delay(350)
+        value = QuickActions.currency(q)
+    }
+    val quick = instant + listOfNotNull(money) + people
+    fun runQuick(a: QuickActions.Action) {
+        if (a.copy != null) {
+            context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText("Résultat", a.copy))
+            android.widget.Toast.makeText(context, "Copié : ${a.copy}", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        val done = runCatching { a.run(context) }.getOrElse { "Aucune appli ne sait faire ça sur ce téléphone" }
+        if (done != null) android.widget.Toast.makeText(context, done, android.widget.Toast.LENGTH_SHORT).show()
+        keyboard?.hide(); onClose()
+    }
     val contactsAllowed = context.checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
     val contacts by produceState(emptyList<Contact>(), query, contactsAllowed) { value = searchContacts(context, query) }
     val q = query.trim().normalizedForSearch()
@@ -275,6 +315,7 @@ fun SearchPanel(launcher: Launcher, modifier: Modifier, onOpen: (AppInfo, Rect?)
     val note = launcher.store.note
     val noteHit = q.length >= 2 && note.normalizedForSearch().contains(q)
     fun launchFirst() {
+        quick.firstOrNull { it.copy == null }?.let { runQuick(it); return }
         val first = matches.firstOrNull()
         if (first != null) openFromSearch(first, null) else if (query.isNotBlank()) { webSearch(context, query); onClose() }
     }
@@ -287,6 +328,14 @@ fun SearchPanel(launcher: Launcher, modifier: Modifier, onOpen: (AppInfo, Rect?)
         }
         Spacer(Modifier.height(16.dp))
         LazyColumn(Modifier.fillMaxSize(), list, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (quick.isNotEmpty()) item {
+                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp))
+                    .background(Brush.linearGradient(Holo.Iridescent.map { it.copy(alpha = .16f) }))
+                    .border(1.dp, Color.White.copy(alpha = .2f), RoundedCornerShape(28.dp)).padding(6.dp)) {
+                    SectionLabel("  Actions")
+                    quick.forEach { a -> ResultRow(quickIcon(a.kind), a.title, a.detail) { runQuick(a) } }
+                }
+            }
             if (calc != null) item {
                 Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp))
                     .background(Brush.linearGradient(Holo.Iridescent.map { it.copy(alpha = .2f) }))
