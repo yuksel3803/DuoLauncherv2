@@ -78,7 +78,7 @@ private fun clockPackage(context: Context): String? = runCatching {
 
 /**
  * Picks the row to show: in the car, maps and music; headphones on, music and videos; a meeting with an address soon,
- * maps; late evening while charging, the alarm clock; otherwise (mode "always") the apps usually opened at this hour.
+ * maps; late evening while charging, the alarm clock. Nothing otherwise.
  */
 fun suggestionFor(context: Context, launcher: Launcher, today: TodayState, playing: String?, exclude: Set<String>, mode: String): Suggestion? {
     if (mode == "off") return null
@@ -108,10 +108,8 @@ fun suggestionFor(context: Context, launcher: Launcher, today: TodayState, playi
         val apps = (pick(-2, first = clockPackage(context)) + usual.filter { it.id !in exclude }).distinctBy { it.id }.take(5)
         if (apps.isNotEmpty()) return Suggestion("Avant de dormir", apps, true)
     }
-    if (mode != "always") return null
-    val apps = usual.filter { it.id !in exclude && it.id !in launcher.layout.hidden }.take(5)
-    return if (apps.size >= 2) Suggestion(when (now.hour) { in 5..10 -> "Ce matin"; in 11..13 -> "Ce midi"; in 14..17 -> "Cet après-midi"; in 18..21 -> "Ce soir"; else -> "Cette nuit" }, apps, false)
-    else null
+    // No row outside these situations (the "usual apps at this hour" row was removed).
+    return null
 }
 
 /** The suggestion row, refreshed every minute and as soon as headphones or a car connect. */

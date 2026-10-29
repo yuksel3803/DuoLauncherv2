@@ -557,11 +557,11 @@ private fun SettingsOptions(
                 Text("Une rangée d’applis qui change selon le moment : en voiture, casque branché, rendez-vous proche, avant de dormir…",
                     color = Holo.Muted, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
                 Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("always" to "Toujours", "context" to "Seulement en situation", "off" to "Jamais").forEach { (key, name) ->
+                    listOf("context" to "En situation", "off" to "Jamais").forEach { (key, name) ->
                         PillButton(name, highlighted = s.suggestions == key) { launcher.updateSettings { it.copy(suggestions = key) } }
                     }
                 }
-                Text("« Toujours » montre aussi les applis que tu ouvres d’habitude à cette heure-ci. La voiture est reconnue par son Bluetooth (autorisation « Appareils à proximité »).",
+                Text("Rien ne s’affiche en dehors de ces situations. La voiture est reconnue par son Bluetooth (autorisation « Appareils à proximité »).",
                     color = Holo.Muted, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             }
             Section("Nouvelles applis") {

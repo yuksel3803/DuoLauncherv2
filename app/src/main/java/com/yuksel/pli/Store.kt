@@ -40,8 +40,8 @@ data class PliSettings(
     val continuity: Boolean = true,
     /** Folding on a page the cover doesn't have shows its apps on the cover ("miroir"). */
     val coverMirror: Boolean = true,
-    /** Suggestions row: "always", "context" (headphones, car…) or "off". */
-    val suggestions: String = "always",
+    /** Suggestions row: "context" (car, headphones, meeting, bedtime) or "off". */
+    val suggestions: String = "context",
     val newBadge: Boolean = true,
     /** Accent colours: "holo", "wallpaper", "aurore", "ocean", "braise", "menthe". */
     val palette: String = "holo",
@@ -100,7 +100,8 @@ class Store(context: Context) {
         onboarded = prefs.getBoolean("onboarded", false),
         continuity = prefs.getBoolean("continuity", true),
         coverMirror = prefs.getBoolean("coverMirror", true),
-        suggestions = prefs.getString("suggestions", "always") ?: "always",
+        // The "usual apps at this hour" row was removed: an old "always" now means "context".
+        suggestions = (prefs.getString("suggestions", "context") ?: "context").let { if (it == "always") "context" else it },
         newBadge = prefs.getBoolean("newBadge", true),
         palette = prefs.getString("palette", "holo") ?: "holo",
         dayNight = prefs.getString("dayNight", "auto") ?: "auto",
