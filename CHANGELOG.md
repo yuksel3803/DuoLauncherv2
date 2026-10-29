@@ -3,6 +3,17 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 24 — Style et raccourcis
+
+- **Styles d’horloge** (Accueil → Horloge) : Fine, Grasse, Aiguilles (cadran holographique) ou En lettres (« quatorze heures douze », « midi vingt »).
+- **Météo vivante** (Thèmes → Fond) : pluie, neige, orage avec un éclair discret, ou brouillard, dessinés sur le fond selon la météo ; s’arrête hors de l’accueil et avec l’économie de batterie.
+- **Fond d’écran animé** (Thèmes → Fond → Appliquer) : les halos holographiques sur l’écran de verrouillage, dans la palette choisie, qui dérivent lentement et s’arrêtent quand l’écran est éteint.
+- **Coffre secret** : appui long sur une appli → « Mettre au coffre secret ». Les applis disparaissent de l’accueil, du dock, de la liste, de la recherche et des suggestions ; on ouvre le coffre avec le geste « Coffre secret » (Réglages → Gestes) puis l’empreinte.
+- **Ranger une page** : appui long sur une case vide → « Ranger cette page » par couleur, catégorie, utilisation ou nom. Les grands dossiers restent en place ; « Annuler » remet l’ordre d’avant.
+- **Réponse rapide** : appui long sur une appli qui a un message non lu → champ « Répondre » sous l’aperçu, envoyé par l’appli elle-même (WhatsApp, Messages, Telegram…).
+- **Dock qui se cache** (Accueil → Dock, écran interne) : il glisse vers le bas pendant que tu changes de page et revient aussitôt après.
+- **Mises à jour toutes les 6 heures** par défaut (Build 23), réglable.
+
 ## Build 23 — Mises à jour économes
 
 - **Vérification toutes les 6 heures** par défaut, à l’accueil comme en arrière-plan, pour épargner la batterie (la build 21 vérifiait toutes les 5 à 15 minutes).

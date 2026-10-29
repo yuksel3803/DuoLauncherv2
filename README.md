@@ -132,6 +132,10 @@ Un **guide des gestes** animé s’affiche au premier lancement, et reste access
 
 ## Personnalisation
 
+- **Styles d’horloge** : fine, grasse, à aiguilles ou en lettres.
+- **Météo vivante** sur le fond et **fond d’écran animé** holographique pour l’écran de verrouillage.
+- **Coffre secret** ouvert par un geste et l’empreinte, **rangement d’une page** par couleur, catégorie, utilisation ou nom.
+- **Réponse rapide** aux messages depuis l’appui long, **dock qui se cache** sur l’écran interne.
 - **Palettes de couleurs** : Holographique, couleurs du fond d’écran, Aurore, Océan, Braise, Menthe.
 - **Ambiance jour et nuit** automatique et **halos vivants** qui suivent l’heure et la batterie.
 - **Effets de changement de page** : Profondeur, Cube, Fondu, Carrousel.
@@ -243,6 +247,8 @@ Tout le code est dans [`app/src/main/java/com/yuksel/pli/`](https://github.com/y
 | `Updater.kt` | Mises à jour intégrées : vérification sur GitHub, fenêtre des nouveautés, téléchargement et installation. |
 | `Continuity.kt`, `Tabletop.kt` | Continuité au pliage, écran externe miroir, mode chevalet. |
 | `Suggestions.kt`, `QuickActions.kt` | Suggestions selon la situation, actions directes de la recherche. |
+| `ClockFace.kt`, `WeatherFx.kt`, `HoloWallpaper.kt` | Styles d’horloge, météo vivante, fond d’écran animé. |
+| `Vault.kt` | Coffre secret. |
 | `Theme.kt`, `Draw.kt`, `NewCards.kt` | Palettes et ambiance, dessiner pour lancer, nouvelles cartes Aujourd’hui. |
 | `Perf.kt` | Travail suspendu quand le launcher n’est pas à l’écran (horloge, météo, capteurs). |
 
