@@ -23,6 +23,12 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -155,46 +161,97 @@ private fun RailItem(icon: ImageVector, label: String, selected: Boolean, onClic
     }
 }
 
-/** A small live copy of the cover home screen: it follows the settings as they change. */
+/** Words that find each settings page from the search field. */
+private val SETTINGS_INDEX: Map<String, String> = mapOf(
+    "Fond" to "fond holographique halos animes fond d ecran wallpaper parallaxe arriere-plan",
+    "Couleurs" to "couleurs palette aurore ocean braise menthe fond d ecran jour nuit ambiance halos vivants theme",
+    "Icônes" to "pack d icones teintees noms des applis etiquettes labels",
+    "Forme" to "forme des icones rond carre squircle goutte feuille cadre de verre bulles",
+    "Animations" to "ouverture des applis animation holographique systeme changement de page cube profondeur fondu carrousel effet",
+    "Grille" to "grille colonnes lignes ecran externe interne taille",
+    "Dock" to "dock taille applis recentes",
+    "Horloge" to "horloge recherche google finder bouton",
+    "Pages" to "pages verrouiller disposition actus nouvelles applis",
+    "Suggestions" to "suggestions contexte voiture casque pastille nouveau nouvelles applis",
+    "Pliage" to "pliage continuite miroir chevalet plier deplier flex charniere",
+    "Masquées" to "applis masquees cachees afficher",
+    "Ajout" to "ajout nouvelles applis installation",
+    "Météo" to "meteo ville position temperature",
+    "Notifications" to "notifications pastilles badges orbite musique acces",
+    "Gestes" to "gestes double appui deux doigts glisser verrouiller notifications guide",
+    "Dessins" to "dessins dessiner lancer formes lettres",
+    "Général" to "general launcher par defaut accueil vibrations haptique economie batterie guide presentation",
+    "Sauvegarde" to "sauvegarde exporter importer disposition fichier",
+    "Mises à jour" to "mises a jour version build verifier journal update",
+)
+
+/** A small live copy of the home screen (cover or inner): real time, palette and layout, following the settings as they change. */
 @Composable
-private fun HomePreview(launcher: Launcher, modifier: Modifier) {
+private fun HomePreview(launcher: Launcher, inner: Boolean, modifier: Modifier) {
     val s = launcher.settings
-    BoxWithConstraints(modifier.clip(RoundedCornerShape(26.dp)).border(1.dp, Holo.edgeBrush, RoundedCornerShape(26.dp))) {
-        HoloBackground(s.phoneWallpaper, false)
+    val now = rememberMinute()
+    val shape = RoundedCornerShape(if (inner) 18.dp else 22.dp)
+    BoxWithConstraints(modifier.aspectRatio(if (inner) 1.12f else .46f).clip(shape).border(1.dp, Holo.edgeBrush, shape)) {
         if (s.phoneWallpaper) Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF2B4C6B), Color(0xFFB0573A)))))
-        val columns = if (s.coverColumns > 0) s.coverColumns else 4
-        val rows = if (s.coverRows > 0) s.coverRows else 5
-        val pad = 10.dp
-        val cell = (maxWidth - pad * 2) / columns
-        val icon = (cell * .7f).coerceAtMost(40.dp)
-        val apps = launcher.visibleHome(Screen.COVER).filter { it.isNotEmpty() && it != HomeLayout.COVERED }
+        HoloBackground(s.phoneWallpaper, false)
+        val screen = if (inner) Screen.INNER else Screen.COVER
+        val pad = 8.dp
+        val homeWidth = if (inner) (maxWidth - pad * 3) / 2 else maxWidth - pad * 2
+        val columns = (if (inner) s.innerColumns else s.coverColumns).takeIf { it > 0 } ?: if (inner) 4 else 4
+        val rows = (if (inner) s.innerRows else s.coverRows).takeIf { it > 0 } ?: 5
+        val cell = homeWidth / columns
+        val icon = (cell * .62f).coerceAtMost(30.dp)
+        val apps = launcher.visibleHome(screen).filter { it.isNotEmpty() && it != HomeLayout.COVERED }
             .mapNotNull { launcher.byId[it] ?: launcher.folderApps(it).firstOrNull() }.take(columns * rows)
-        val dock = launcher.visibleDock(Screen.COVER).mapNotNull { launcher.byId[it] }
-        Column(Modifier.fillMaxSize().padding(pad)) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                IridescentText("18:42", 30.sp, Modifier.weight(1f), letterSpacing = (-1).sp)
-                if (s.headerSearch != "none") Box(Modifier.padding(bottom = 6.dp).size(24.dp).glass(CircleShape, .1f), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Search, null, tint = Holo.Ink, modifier = Modifier.size(13.dp))
+        val dock = launcher.visibleDock(screen).mapNotNull { launcher.byId[it] }
+        val clock = now.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+        val home: @Composable (Modifier) -> Unit = { m ->
+            Column(m) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    IridescentText(clock, if (inner) 18.sp else 22.sp, Modifier.weight(1f), letterSpacing = (-.5).sp)
+                    if (s.headerSearch != "none") Box(Modifier.padding(bottom = 3.dp).size(16.dp).glass(CircleShape, .1f), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Rounded.Search, null, tint = Holo.Ink, modifier = Modifier.size(9.dp))
+                    }
                 }
-            }
-            Spacer(Modifier.height(8.dp))
-            apps.chunked(columns).forEach { line ->
-                Row(Modifier.fillMaxWidth()) {
-                    line.forEach { app ->
-                        Column(Modifier.width(cell).padding(vertical = 3.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            AppIcon(app, icon, showBadge = false)
-                            if (s.labels) Text(app.label, color = Holo.Soft, fontSize = 6.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(4.dp))
+                apps.chunked(columns).forEach { line ->
+                    Row(Modifier.fillMaxWidth()) {
+                        line.forEach { app ->
+                            Column(Modifier.width(cell).padding(vertical = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                AppIcon(app, icon, showBadge = false)
+                                if (s.labels) Text(app.label, color = Holo.Soft, fontSize = 5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
                         }
                     }
                 }
             }
-            Spacer(Modifier.weight(1f))
-            Row(Modifier.fillMaxWidth().glass(RoundedCornerShape(50), .08f).padding(horizontal = 6.dp, vertical = 5.dp),
+        }
+        Column(Modifier.fillMaxSize().padding(pad)) {
+            if (inner) Row(Modifier.weight(1f)) {
+                Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    IridescentText("Aujourd’hui", 11.sp, letterSpacing = 0.sp)
+                    launcher.layout.today.take(4).forEach { item ->
+                        Box(Modifier.fillMaxWidth().height(if (item.kind == TodayItem.WEATHER) 30.dp else 22.dp).glass(RoundedCornerShape(8.dp), .06f)
+                            .padding(horizontal = 6.dp), contentAlignment = Alignment.CenterStart) {
+                            Text(previewTitle(item.kind), color = Holo.Muted, fontSize = 5.sp, letterSpacing = 1.sp, maxLines = 1)
+                        }
+                    }
+                }
+                Spacer(Modifier.width(pad))
+                home(Modifier.weight(1f).fillMaxHeight())
+            } else home(Modifier.weight(1f))
+            Row(Modifier.fillMaxWidth().glass(RoundedCornerShape(50), .08f).padding(horizontal = 4.dp, vertical = 3.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly) {
-                dock.take(s.dockSize).forEach { AppIcon(it, (icon * .85f), showBadge = false) }
+                dock.take(if (inner) s.innerDockSize else s.dockSize).forEach { AppIcon(it, icon * .8f, showBadge = false) }
             }
         }
     }
+}
+
+private fun previewTitle(kind: String) = when (kind) {
+    TodayItem.WEATHER -> "MÉTÉO"; TodayItem.AGENDA -> "AGENDA"; TodayItem.MEDIA -> "MUSIQUE"; TodayItem.BATTERY -> "BATTERIE"
+    TodayItem.NOTE -> "NOTE"; TodayItem.TOGGLES -> "RACCOURCIS"; TodayItem.TASKS -> "RAPPELS"; TodayItem.SCREEN_TIME -> "TEMPS D’ÉCRAN"
+    TodayItem.COUNTDOWN -> "COMPTE À REBOURS"; TodayItem.MEMORY -> "SOUVENIR"; TodayItem.TRIP -> "TRAJET"; else -> "WIDGET"
 }
 
 @Composable
@@ -224,53 +281,115 @@ fun SettingsPanel(
     }
     var category by rememberSaveable { mutableStateOf(if (isDefaultHome) SettingsCategory.THEMES else SettingsCategory.GENERAL) }
     var sub by rememberSaveable { mutableStateOf(category.subs.first().first) }
+    var query by rememberSaveable { mutableStateOf("") }
+    var previewInner by rememberSaveable { mutableStateOf(false) }
+    val list = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    fun go(c: SettingsCategory, target: String) {
+        val changed = c != category
+        category = c; sub = target; query = ""
+        val index = c.subs.indexOfFirst { it.first == target }.coerceAtLeast(0)
+        scope.launch { if (changed) list.scrollToItem(index) else list.animateScrollToItem(index) }
+    }
     // Opened from elsewhere on a given page (e.g. "Mes dessins" from the drawing pad).
     LaunchedEffect(startOn) {
         val target = startOn ?: return@LaunchedEffect
-        SettingsCategory.entries.firstOrNull { c -> c.subs.any { it.first == target } }?.let { category = it; sub = target }
+        SettingsCategory.entries.firstOrNull { c -> c.subs.any { it.first == target } }?.let { go(it, target) }
     }
+    // The page under the title follows the scroll.
+    LaunchedEffect(list, category) {
+        snapshotFlow { list.firstVisibleItemIndex }.collect { i -> category.subs.getOrNull(i)?.let { sub = it.first } }
+    }
+    val chip: @Composable (String, Boolean, () -> Unit) -> Unit = { label, on, click ->
+        Box(Modifier.height(36.dp).clip(RoundedCornerShape(50))
+            .then(if (on) Modifier.background(Brush.linearGradient(Holo.Iridescent), RoundedCornerShape(50)) else Modifier.glass(RoundedCornerShape(50), .05f))
+            .clickable(onClick = click).padding(horizontal = 14.dp), contentAlignment = Alignment.Center) {
+            Text(label, color = if (on) Color(0xFF120A22) else Holo.Soft, fontSize = 13.sp, maxLines = 1)
+        }
+    }
+    // Every page of the category in one scroll; the chips jump to a page.
     val options: @Composable (Modifier) -> Unit = { m ->
-        Column(m.clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)).background(Holo.Panel.copy(alpha = .96f))
-            .border(1.dp, Holo.edgeBrush, RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)).padding(top = 18.dp)) {
-            Text(category.label, color = Holo.Muted, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 22.dp))
-            Text(sub, color = Holo.Ink, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 22.dp))
-            Spacer(Modifier.height(10.dp))
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                SettingsOptions(category, sub, launcher, isDefaultHome, badgesAllowed, onMakeDefault, onNotificationAccess, onLocation,
-                    onWeatherChanged, onExport, onImport, accessibilityOn, onAccessibility, onPick = { picking = it },
-                    onGuide = onGuide, onOnboarding = onOnboarding, onPickApp = { pickFor = it })
-                Spacer(Modifier.height(24.dp))
+        Column(m.clip(RoundedCornerShape(30.dp)).background(Holo.Panel).border(1.dp, Holo.edgeBrush, RoundedCornerShape(30.dp))) {
+            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(category.icon, null, tint = Holo.Violet, modifier = Modifier.size(24.dp))
+                Text(category.label, color = Holo.Ink, fontSize = 24.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 10.dp))
+            }
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                category.subs.forEach { (name, _) -> chip(name, name == sub) { go(category, name) } }
+            }
+            LazyColumn(Modifier.fillMaxSize(), list, contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 260.dp),
+                verticalArrangement = Arrangement.spacedBy(22.dp)) {
+                items(category.subs, key = { category.name + it.first }) { (name, icon) ->
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(Modifier.padding(start = 6.dp, top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(30.dp).background(Brush.linearGradient(Holo.Iridescent.map { it.copy(alpha = .28f) }), CircleShape),
+                                contentAlignment = Alignment.Center) { Icon(icon, null, tint = Holo.Ink, modifier = Modifier.size(17.dp)) }
+                            Text(name, color = Holo.Ink, fontSize = 18.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 10.dp))
+                        }
+                        SettingsOptions(category, name, launcher, isDefaultHome, badgesAllowed, onMakeDefault, onNotificationAccess, onLocation,
+                            onWeatherChanged, onExport, onImport, accessibilityOn, onAccessibility, onPick = { picking = it },
+                            onGuide = onGuide, onOnboarding = onOnboarding, onPickApp = { pickFor = it })
+                    }
+                }
             }
         }
     }
-    val rails: @Composable (Modifier) -> Unit = { m ->
-        Row(m) {
-            Column(Modifier.width(80.dp).fillMaxHeight().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.Center) {
-                SettingsCategory.entries.forEach { c ->
-                    RailItem(c.icon, c.label, c == category) { category = c; sub = c.subs.first().first }
-                }
+    val categories: @Composable (Modifier) -> Unit = { m ->
+        Column(m.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            SettingsCategory.entries.forEach { c -> RailItem(c.icon, c.label, c == category) { go(c, c.subs.first().first) } }
+        }
+    }
+    val preview: @Composable (Modifier) -> Unit = { m ->
+        Column(m, horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                chip("Externe", !previewInner) { previewInner = false }
+                chip("Interne", previewInner) { previewInner = true }
             }
-            HomePreview(launcher, Modifier.weight(1f).fillMaxHeight().padding(vertical = 6.dp, horizontal = 6.dp))
-            Column(Modifier.width(84.dp).fillMaxHeight().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.Center) {
-                category.subs.forEach { (name, icon) -> RailItem(icon, name, name == sub) { sub = name } }
-            }
+            Spacer(Modifier.height(10.dp))
+            HomePreview(launcher, previewInner, Modifier.widthIn(max = if (previewInner) 300.dp else 150.dp).fillMaxWidth())
+            Text("Aperçu en direct", color = Holo.Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp))
+        }
+    }
+    val results = remember(query) {
+        val q = query.trim().normalizedForSearch()
+        if (q.length < 2) emptyList() else SettingsCategory.entries.flatMap { c -> c.subs.map { c to it } }.filter { (_, sub) ->
+            sub.first.normalizedForSearch().contains(q) || (SETTINGS_INDEX[sub.first] ?: "").contains(q)
         }
     }
     BoxWithConstraints(modifier) {
         val wide = maxWidth > 700.dp
-        val height = maxHeight
         Column(Modifier.fillMaxSize()) {
-            Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                IridescentText("Réglages", 28.sp, Modifier.weight(1f), letterSpacing = (-.5).sp)
+            Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (wide) IridescentText("Réglages", 28.sp, Modifier.padding(end = 16.dp), letterSpacing = (-.5).sp)
+                GlassField(query, { query = it }, "Rechercher un réglage", null, Modifier.weight(1f))
+                Spacer(Modifier.width(10.dp))
                 PillButton("Fermer", onClick = onClose)
             }
-            if (wide) Row(Modifier.fillMaxSize()) {
-                rails(Modifier.weight(1f).fillMaxHeight().padding(bottom = 10.dp))
+            if (query.trim().length >= 2) {
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (results.isEmpty()) Text("Aucun réglage ne correspond.", color = Holo.Muted, fontSize = 14.sp, modifier = Modifier.padding(16.dp))
+                    results.forEach { (c, entry) ->
+                        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).glass(RoundedCornerShape(20.dp), .05f)
+                            .clickable { go(c, entry.first) }.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(entry.second, null, tint = Holo.Violet, modifier = Modifier.size(22.dp))
+                            Column(Modifier.padding(start = 14.dp)) {
+                                Text(entry.first, color = Holo.Ink, fontSize = 15.sp)
+                                Text(c.label, color = Holo.Muted, fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+            } else if (wide) Row(Modifier.fillMaxSize()) {
+                categories(Modifier.width(92.dp).fillMaxHeight())
+                Spacer(Modifier.width(8.dp))
+                preview(Modifier.width(if (previewInner) 300.dp else 170.dp).padding(top = 4.dp))
                 Spacer(Modifier.width(16.dp))
                 options(Modifier.weight(1f).fillMaxHeight())
-            } else {
-                rails(Modifier.fillMaxWidth().height(height * .44f))
-                Spacer(Modifier.height(10.dp))
+            } else Column(Modifier.fillMaxSize()) {
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    SettingsCategory.entries.forEach { c -> chip(c.label, c == category) { go(c, c.subs.first().first) } }
+                }
                 options(Modifier.fillMaxWidth().weight(1f))
             }
         }

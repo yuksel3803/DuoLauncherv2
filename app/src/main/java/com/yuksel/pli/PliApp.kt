@@ -350,7 +350,7 @@ fun PliApp(host: PliHost, signals: HostSignals) {
                 AppDrawer(launcher, it, { app, r -> open(app, r) }, onHold = { app, r -> menu = MenuRequest(app.id, r, Origin.Drawer) },
                     onClose = { panel = Panel.NONE })
             }
-            FullPanel(panel == Panel.SETTINGS) {
+            FullPanel(panel == Panel.SETTINGS, maxWidth = 1240.dp) {
                 run {
                     SettingsPanel(launcher, signals.isDefaultHome, today.notificationsAllowed, it,
                         onClose = { panel = Panel.NONE }, onMakeDefault = host::requestDefaultHome,
@@ -452,14 +452,15 @@ class HomeActions(
 
 /** A full-screen frosted panel that slides up (search, all apps, settings, widgets). */
 @Composable
-private fun FullPanel(visible: Boolean, content: @Composable (Modifier) -> Unit) {
+private fun FullPanel(visible: Boolean, maxWidth: androidx.compose.ui.unit.Dp = 760.dp, content: @Composable (Modifier) -> Unit) {
     AnimatedVisibility(visible, enter = fadeIn() + slideInVertically { it / 8 }, exit = fadeOut() + slideOutVertically { it / 8 }) {
-        Box(Modifier.fillMaxSize().background(Holo.Base.copy(alpha = .985f))
+        // Opaque: the home screen never shows through a panel.
+        Box(Modifier.fillMaxSize().background(Holo.Base)
             .clickable(remember { MutableInteractionSource() }, null) {}) {
             Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(Holo.Violet.copy(alpha = .10f), Color.Transparent),
                 center = Offset(0f, 0f), radius = 1400f)))
             Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing), contentAlignment = Alignment.TopCenter) {
-                content(Modifier.widthIn(max = 760.dp).fillMaxSize().padding(horizontal = 18.dp, vertical = 12.dp))
+                content(Modifier.widthIn(max = maxWidth).fillMaxSize().padding(horizontal = 18.dp, vertical = 12.dp))
             }
         }
     }

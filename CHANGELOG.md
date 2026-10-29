@@ -3,6 +3,14 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 19 — Réglages repensés
+
+- **Fond opaque** : l’écran d’accueil ne transparaît plus derrière les réglages (ni derrière la recherche et les autres panneaux).
+- **Recherche dans les réglages** : « dock », « couleurs », « batterie », « miroir »… mène directement à la bonne section.
+- **Une page par catégorie** : toutes les sections d’une catégorie se suivent dans un seul défilement ; les pastilles en haut sautent à une section et suivent le défilement.
+- **Aperçu plus compact** et vivant : la vraie heure, la palette et la grille actuelles, avec le choix « Externe » ou « Interne » (page Aujourd’hui, grille et dock de l’écran déplié).
+- **Écran externe** : les catégories passent en pastilles en haut pour laisser toute la hauteur aux réglages.
+
 ## Build 18 — Un launcher qui s’adapte
 
 **Pliage**
