@@ -3,6 +3,10 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 25
+
+- **Bandeau « Déplacé » retiré** : déplacer une appli ne fait plus apparaître « Annuler » en bas de l’écran. Il reste seulement quand on retire une appli de l’accueil.
+
 ## Build 24 — Style et raccourcis
 
 - **Styles d’horloge** (Accueil → Horloge) : Fine, Grasse, Aiguilles (cadran holographique) ou En lettres (« quatorze heures douze », « midi vingt »).
