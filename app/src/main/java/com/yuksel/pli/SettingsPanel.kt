@@ -642,7 +642,19 @@ private fun UpdateSettings() {
     Section("Mises à jour") {
         Text("Version installée : build ${Updater.currentBuild(context)}", color = Holo.Soft, fontSize = 14.sp,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp))
-        ToggleRow("Vérifier automatiquement", "Une fenêtre s’affiche quand une nouvelle version sort", auto) { v -> auto = v; Updater.setAutomatic(context, v) }
+        ToggleRow("Vérifier automatiquement", "Une fenêtre (ou une notification) s’affiche quand une nouvelle version sort", auto) { v -> auto = v; Updater.setAutomatic(context, v) }
+        if (auto) {
+            var every by remember { mutableStateOf(Updater.everyHours(context)) }
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
+                Text("Fréquence", color = Holo.Ink, fontSize = 15.sp)
+                Text("Moins souvent = moins de batterie ; « Vérifier » ci-dessous marche à tout moment", color = Holo.Muted, fontSize = 12.sp)
+                Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Updater.FREQUENCIES.forEach { h ->
+                        PillButton(if (h == 24) "Une fois par jour" else "Toutes les $h h", highlighted = every == h) { every = h; Updater.setEveryHours(context, h) }
+                    }
+                }
+            }
+        }
         val found = Updater.available
         if (found != null) ActionRow("Build ${found.build} disponible", "Voir les nouveautés et installer", "Installer") { Updater.open() }
         else ActionRow("Rechercher une mise à jour", if (Updater.checking) "Recherche…" else Updater.message, "Vérifier") {

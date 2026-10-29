@@ -427,15 +427,12 @@ fun PliApp(host: PliHost, signals: HostSignals) {
                     PillButton("Annuler", highlighted = true) { launcher.undoLast() }
                 }
             }
-            // A newer Fold Launcher Pro on GitHub: checked when the launcher comes on screen (at most every 15 min).
+            // A newer Fold Launcher Pro on GitHub: checked when the launcher comes on screen, at most every 6 h (setting).
             LaunchedEffect(onScreen, launcher.loaded, launcher.settings.onboarded, signals.updateTaps) {
                 if (!launcher.loaded || !launcher.settings.onboarded) return@LaunchedEffect
                 // Android 13+: allowed to show the "new version" notification (asked once).
                 if (android.os.Build.VERSION.SDK_INT >= 33 && Updater.askNotifications(context)) host.requestPermission(android.Manifest.permission.POST_NOTIFICATIONS)
-                while (onScreen) {
-                    Updater.check(context, manual = false)
-                    delay(5 * 60_000L)
-                }
+                if (onScreen) Updater.check(context, manual = false)
             }
             UpdateDialog()
         }

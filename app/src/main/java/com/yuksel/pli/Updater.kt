@@ -58,8 +58,8 @@ import java.net.URL
 object Updater {
     private const val RELEASES = "https://api.github.com/repos/yuksel3803/DuoLauncherv2/releases?per_page=20"
     private const val PREFS = "updates"
-    /** Automatic checks run each time the home screen comes back (and every 5 min while it stays); this only avoids doubles. */
-    private const val CHECK_EVERY = 20_000L
+    /** Hours between automatic checks offered in the settings; 6 by default, to spare the battery. */
+    val FREQUENCIES = listOf(1, 6, 24)
     const val CHANNEL = "updates"
     const val EXTRA_SHOW = "com.yuksel.pli.SHOW_UPDATE"
 
@@ -98,6 +98,13 @@ object Updater {
     }
     fun setAutomatic(context: Context, on: Boolean) { prefs(context).edit().putBoolean("auto", on).apply() }
 
+    fun everyHours(context: Context) = prefs(context).getInt("everyHours", 6).takeIf { it in FREQUENCIES } ?: 6
+
+    fun setEveryHours(context: Context, hours: Int) {
+        prefs(context).edit().putInt("everyHours", hours).apply()
+        schedule(context, replace = true)
+    }
+
     /**
      * Asks GitHub for the latest build. Automatic checks respect "Plus tard" (unless the notification was tapped);
      * a manual check (from the settings) always runs and always opens the window when there is something new.
@@ -106,7 +113,7 @@ object Updater {
         val forced = forceNext.also { forceNext = false }
         val p = prefs(context)
         val now = System.currentTimeMillis()
-        if (!manual && !forced && (!automatic(context) || now - p.getLong("checkedAt", 0) < CHECK_EVERY) && available == null) return
+        if (!manual && !forced && (!automatic(context) || now - p.getLong("checkedAt", 0) < everyHours(context) * 3_600_000L) && available == null) return
         if (checking) return
         checking = true
         if (manual) message = null
@@ -154,12 +161,15 @@ object Updater {
         p.edit().putInt("notifiedBuild", release.build).apply()
     }
 
-    /** Checks every 15 minutes in the background (Android's minimum), even while another app is open. */
-    fun schedule(context: Context) {
+    /** Checks in the background every [everyHours] hours, even while another app is open (Android picks the best moment). */
+    fun schedule(context: Context, replace: Boolean = false) {
         val jobs = context.getSystemService(android.app.job.JobScheduler::class.java) ?: return
-        if (jobs.getPendingJob(JOB_ID) != null) return
+        val period = everyHours(context) * 3_600_000L
+        val pending = jobs.getPendingJob(JOB_ID)
+        if (!replace && pending != null && pending.intervalMillis == period) return
+        if (pending != null) jobs.cancel(JOB_ID)
         val job = android.app.job.JobInfo.Builder(JOB_ID, android.content.ComponentName(context, UpdateJob::class.java))
-            .setPeriodic(15 * 60_000L)
+            .setPeriodic(period)
             .setRequiredNetworkType(android.app.job.JobInfo.NETWORK_TYPE_ANY)
             .setPersisted(true)
             .build()
