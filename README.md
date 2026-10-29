@@ -90,7 +90,7 @@ Un Fold, c’est deux téléphones en un : un écran externe étroit qu’on uti
 - Cherche dans les **applis, les contacts, les réglages et le web**, et fait les **calculs** directement.
 - **Elle apprend** : les applis que tu ouvres le plus souvent depuis une recherche remontent en premier.
 - **Actions directes** : « minuteur 10 min », « alarme 7h », « rappel pain », « 5 miles en km », « 20 € en dollars » (taux BCE), « appeler Maman », « sms Léa ».
-- **Suggestions sous l’horloge** selon la situation : en voiture, casque branché, rendez-vous proche, avant de dormir, ou les applis habituelles de l’heure.
+- **Suggestions sous l’horloge** selon la situation : en voiture, casque branché, rendez-vous proche, avant de dormir.
 - **Ajout de plusieurs applis d’un coup** sur l’accueil depuis la liste.
 
 ---

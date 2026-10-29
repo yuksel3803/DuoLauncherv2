@@ -3,6 +3,10 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 22
+
+- **Rangée « Ce matin / Ce midi… » retirée** : les applis habituelles de l’heure ne s’affichent plus sous l’horloge. Il ne reste que les suggestions de situation (voiture, casque, rendez-vous proche, avant de dormir), désactivables dans Réglages → Accueil → Suggestions.
+
 ## Build 21 — Mises à jour immédiates
 
 - **Fenêtre de mise à jour sans attendre** : le launcher regarde sur GitHub à chaque retour sur l’accueil, puis toutes les 5 minutes tant qu’il est affiché (avant : une fois toutes les 6 heures, d’où l’absence de fenêtre).
