@@ -259,6 +259,10 @@ fun PliApp(host: PliHost, signals: HostSignals) {
             if (launcher.loaded) BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout))) {
                 val wide = maxWidth >= 600.dp
                 val current = if (wide) Screen.INNER else Screen.COVER
+                SideEffect {
+                    val ratio = (maxWidth / maxHeight).coerceIn(.3f, 2.5f)
+                    if (wide) ScreenShapes.inner = ratio else ScreenShapes.cover = ratio
+                }
                 SideEffect { if (screen != current) { screen = current; drag.clear(); if (current == Screen.INNER) mirror = null } }
                 val swipesOn = panel == Panel.NONE && menu == null && folder == null && !drag.active && !selection.active
                 // Half-folded with the hinge across the screen: tabletop layout.

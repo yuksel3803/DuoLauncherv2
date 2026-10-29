@@ -23,6 +23,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.PaddingValues
@@ -161,6 +162,12 @@ private fun RailItem(icon: ImageVector, label: String, selected: Boolean, onClic
     }
 }
 
+/** Width ÷ height of each screen, measured when it was last shown, so the preview has the real proportions. */
+object ScreenShapes {
+    var cover = .62f
+    var inner = 1.2f
+}
+
 /** Words that find each settings page from the search field. */
 private val SETTINGS_INDEX: Map<String, String> = mapOf(
     "Fond" to "fond holographique halos animes fond d ecran wallpaper parallaxe arriere-plan",
@@ -191,18 +198,16 @@ private fun HomePreview(launcher: Launcher, inner: Boolean, modifier: Modifier) 
     val s = launcher.settings
     val now = rememberMinute()
     val shape = RoundedCornerShape(if (inner) 18.dp else 22.dp)
-    BoxWithConstraints(modifier.aspectRatio(if (inner) 1.12f else .46f).clip(shape).border(1.dp, Holo.edgeBrush, shape)) {
+    BoxWithConstraints(modifier.aspectRatio(if (inner) ScreenShapes.inner else ScreenShapes.cover).clip(shape).border(1.dp, Holo.edgeBrush, shape)) {
         if (s.phoneWallpaper) Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF2B4C6B), Color(0xFFB0573A)))))
         HoloBackground(s.phoneWallpaper, false)
         val screen = if (inner) Screen.INNER else Screen.COVER
         val pad = 8.dp
-        val homeWidth = if (inner) (maxWidth - pad * 3) / 2 else maxWidth - pad * 2
-        val columns = (if (inner) s.innerColumns else s.coverColumns).takeIf { it > 0 } ?: if (inner) 4 else 4
-        val rows = (if (inner) s.innerRows else s.coverRows).takeIf { it > 0 } ?: 5
-        val cell = homeWidth / columns
-        val icon = (cell * .62f).coerceAtMost(30.dp)
-        val apps = launcher.visibleHome(screen).filter { it.isNotEmpty() && it != HomeLayout.COVERED }
-            .mapNotNull { launcher.byId[it] ?: launcher.folderApps(it).firstOrNull() }.take(columns * rows)
+        // The real grid of the first page: same cells, empty cells kept, big folders with their size.
+        val grid = launcher.layout.grid(screen)
+        val columns = grid?.columns ?: (if (inner) s.innerColumns else s.coverColumns).takeIf { it > 0 } ?: 4
+        val rows = grid?.rows ?: (if (inner) s.innerRows else s.coverRows).takeIf { it > 0 } ?: 5
+        val slots = launcher.visibleHome(screen).take(columns * rows)
         val dock = launcher.visibleDock(screen).mapNotNull { launcher.byId[it] }
         val clock = now.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
         val home: @Composable (Modifier) -> Unit = { m ->
@@ -214,18 +219,45 @@ private fun HomePreview(launcher: Launcher, inner: Boolean, modifier: Modifier) 
                     }
                 }
                 Spacer(Modifier.height(4.dp))
-                apps.chunked(columns).forEach { line ->
-                    Row(Modifier.fillMaxWidth()) {
-                        line.forEach { app ->
-                            Column(Modifier.width(cell).padding(vertical = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                AppIcon(app, icon, showBadge = false)
-                                if (s.labels) Text(app.label, color = Holo.Soft, fontSize = 5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+                    val cw = maxWidth / columns
+                    val ch = maxHeight / rows
+                    val icon = minOf(cw * .62f, ch * (if (s.labels) .6f else .75f), 30.dp)
+                    slots.forEachIndexed { index, id ->
+                        if (id.isEmpty() || id == HomeLayout.COVERED) return@forEachIndexed
+                        val row = index / columns; val col = index % columns
+                        val folder = launcher.layout.folders[id]
+                        val w = if (folder?.big == true) (if (folder.w <= 0) columns - col else folder.w.coerceIn(1, columns - col)) else 1
+                        val h = if (folder?.big == true) folder.h.coerceIn(1, rows - row) else 1
+                        Box(Modifier.offset(x = cw * col, y = ch * row).size(cw * w, ch * h), contentAlignment = Alignment.TopCenter) {
+                            if (folder != null) {
+                                val inside = launcher.folderApps(id)
+                                val big = folder.big
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Box(Modifier.padding(top = 2.dp).then(if (big) Modifier.size(cw * w - 4.dp, ch * h - 4.dp) else Modifier.size(icon))
+                                        .glass(RoundedCornerShape(if (big) 10.dp else 8.dp), .1f).padding(2.dp)) {
+                                        val per = if (big) maxOf(2, w * 2) else 2
+                                        val tiny = if (big) minOf(icon * .8f, (cw * w - 8.dp) / per) else (icon - 4.dp) / 2
+                                        Column {
+                                            inside.take(if (big) per * maxOf(2, h * 2) else 4).chunked(per).forEach { line ->
+                                                Row { line.forEach { AppIcon(it, tiny, showBadge = false) } }
+                                            }
+                                        }
+                                    }
+                                    if (s.labels && !big) Text(folder.title.ifBlank { "Dossier" }, color = Holo.Soft, fontSize = 5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                            } else launcher.byId[id]?.let { app ->
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    AppIcon(app, icon, Modifier.padding(top = 2.dp), showBadge = false)
+                                    if (s.labels) Text(app.label, color = Holo.Soft, fontSize = 5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        val dockIcon = if (inner) 14.dp else 18.dp
         Column(Modifier.fillMaxSize().padding(pad)) {
             if (inner) Row(Modifier.weight(1f)) {
                 Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -240,9 +272,10 @@ private fun HomePreview(launcher: Launcher, inner: Boolean, modifier: Modifier) 
                 Spacer(Modifier.width(pad))
                 home(Modifier.weight(1f).fillMaxHeight())
             } else home(Modifier.weight(1f))
+            Spacer(Modifier.height(4.dp))
             Row(Modifier.fillMaxWidth().glass(RoundedCornerShape(50), .08f).padding(horizontal = 4.dp, vertical = 3.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly) {
-                dock.take(if (inner) s.innerDockSize else s.dockSize).forEach { AppIcon(it, icon * .8f, showBadge = false) }
+                dock.take(if (inner) s.innerDockSize else s.dockSize).forEach { AppIcon(it, dockIcon, showBadge = false) }
             }
         }
     }
@@ -347,7 +380,7 @@ fun SettingsPanel(
                 chip("Interne", previewInner) { previewInner = true }
             }
             Spacer(Modifier.height(10.dp))
-            HomePreview(launcher, previewInner, Modifier.widthIn(max = if (previewInner) 300.dp else 150.dp).fillMaxWidth())
+            HomePreview(launcher, previewInner, Modifier.widthIn(max = if (previewInner) 300.dp else 170.dp).fillMaxWidth())
             Text("Aperçu en direct", color = Holo.Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp))
         }
     }

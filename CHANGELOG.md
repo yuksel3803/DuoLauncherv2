@@ -3,6 +3,10 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 20 — Aperçu fidèle
+
+- L’aperçu des réglages reproduit exactement la première page de ton accueil : même grille, cases vides conservées, dossiers et grands dossiers à leur place et à leur taille, aux vraies proportions de chaque écran.
+
 ## Build 19 — Réglages repensés
 
 - **Fond opaque** : l’écran d’accueil ne transparaît plus derrière les réglages (ni derrière la recherche et les autres panneaux).
