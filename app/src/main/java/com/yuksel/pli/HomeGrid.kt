@@ -118,6 +118,8 @@ class DragState {
     var pageCapacity = 1
     var currentHomePage = 0
     var iconPx = 100f
+    /** Space above the icon inside a cell. */
+    var iconTopPx = 10f
     val dockCells = HashMap<Int, Rect>()
     var dockCount = 0
     var dockRect = Rect.Zero
@@ -161,9 +163,10 @@ class DragState {
             val id = homeIndexOf(i).orEmpty()
             if (id.isEmpty() || id == dragged) return DropSpot.Home(screen, i)
             if (id in bigFolders) return if (folderDrag) DropSpot.Home(screen, i) else DropSpot.Into(screen, i)
-            val iconCenter = Offset(r.center.x, r.top + iconPx / 2f)
-            return if (!folderDrag && (p - iconCenter).getDistance() < iconPx * .38f) DropSpot.Into(screen, i)
-            else DropSpot.Home(screen, i)
+            // Anywhere over the target's icon (with a margin) makes a folder; the label and cell edges just move the app there.
+            val top = r.top + iconTopPx
+            val icon = Rect(r.center.x - iconPx / 2f, top, r.center.x + iconPx / 2f, top + iconPx).inflate(iconPx * .22f)
+            return if (!folderDrag && icon.contains(p)) DropSpot.Into(screen, i) else DropSpot.Home(screen, i)
         }
         return null
     }
@@ -285,6 +288,7 @@ fun HomePages(
     drag.pageCapacity = metrics.capacity
     drag.currentHomePage = (pager.currentPage - pageOffset).coerceAtLeast(0)
     drag.iconPx = with(LocalDensity.current) { metrics.icon.toPx() }
+    drag.iconTopPx = with(LocalDensity.current) { 4.dp.toPx() }
     drag.slopPx = with(LocalDensity.current) { 14.dp.toPx() }
 
     // Holding an icon near the left or right edge turns the page.
@@ -427,6 +431,8 @@ private fun HomeCell(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(if (pressed) .9f else if (intoHere) 1.12f else 1f, label = "press")
+    // A small tick when letting go here would make a folder.
+    LaunchedEffect(intoHere) { if (intoHere) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) }
     val folder = if (HomeLayout.isFolder(id)) launcher.layout.folders[id] else null
     val app = if (folder == null) launcher.byId[id] else null
     val label = folder?.title ?: app?.label ?: ""

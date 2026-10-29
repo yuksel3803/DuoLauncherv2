@@ -1,2 +1,3 @@
-- Plus de bandeau « Déplacé · Annuler » quand tu déplaces une appli.
-- Le bandeau reste seulement quand tu retires une appli de l'accueil, pour pouvoir annuler.
+- Créer un dossier est beaucoup plus facile : lâche une appli n'importe où sur l'icône d'une autre (avant, il fallait viser le centre exact).
+- Une petite vibration et un anneau irisé indiquent que lâcher ici créera un dossier.
+- Lâcher sur le nom ou le bord de la case déplace simplement l'appli à cet endroit.
