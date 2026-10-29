@@ -164,6 +164,24 @@ data class DockSizes(val cover: Int, val inner: Int) {
 }
 
 object LayoutEdits {
+    /**
+     * Puts the apps and small folders of one page in the given [order], reading order, keeping big folders
+     * (and the cells they cover) where they are. Empty cells move to the end of the page.
+     */
+    fun sortPage(layout: HomeLayout, screen: Screen, page: Int, capacity: Int, order: List<String>): HomeLayout {
+        val list = layout.home(screen).toMutableList()
+        val start = page * capacity
+        while (list.size < start + capacity) list += EMPTY
+        val cells = (start until start + capacity).filter { i ->
+            val id = list[i]
+            id != COVERED && !(HomeLayout.isFolder(id) && layout.folders[id]?.big == true)
+        }
+        val present = cells.map { list[it] }.filter { it.isNotEmpty() }.toSet()
+        val sorted = order.filter { it in present } + present.filter { it !in order }
+        cells.forEachIndexed { k, i -> list[i] = sorted.getOrElse(k) { EMPTY } }
+        return layout.withHome(screen, list.dropLastWhile { it == EMPTY })
+    }
+
     private const val EMPTY = HomeLayout.EMPTY
 
     /** Empties the slots holding [ids] (other icons do not move). */

@@ -91,7 +91,7 @@ fun ClockHeader(today: TodayState, clockSize: TextUnit, compact: Boolean, modifi
                 Text((if (compact) now.format(DateTimeFormatter.ofPattern("EEE d MMM", FR)) else
                     now.format(DateTimeFormatter.ofPattern("EEEE · d MMMM", FR))).uppercase(FR),
                     color = Holo.Muted, fontSize = 12.sp, letterSpacing = 3.sp, maxLines = 1)
-                IridescentText(now.format(DateTimeFormatter.ofPattern(pattern)), clockSize,
+                ClockFace(now, pattern, clockSize, LocalClockStyle.current,
                     Modifier.clickable { runCatching { context.startActivity(Intent(AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
                         .semantics { contentDescription = "Heure ; ouvrir l’horloge" })
             }

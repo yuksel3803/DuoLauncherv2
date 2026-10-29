@@ -1,5 +1,10 @@
-Mises à jour plus économes en batterie.
+Ton style partout, et des raccourcis malins.
 
-- Vérification automatique toutes les 6 heures (au lieu de toutes les 5 à 15 minutes), à l'accueil comme en arrière-plan.
-- Fréquence au choix dans Réglages → Paramètres → Mises à jour : toutes les heures, toutes les 6 h ou une fois par jour.
-- Le bouton « Vérifier » marche toujours à tout moment.
+- Styles d'horloge : Fine, Grasse, Aiguilles (cadran holographique) ou En lettres (« quatorze heures douze »).
+- Météo vivante : pluie, neige, orage ou brouillard dessinés légèrement sur le fond quand la météo l'annonce.
+- Fond d'écran animé : les halos holographiques sur l'écran de verrouillage, dans ta palette.
+- Coffre secret : des applis invisibles partout, qu'on ouvre avec un geste puis l'empreinte.
+- Ranger une page : par couleur, catégorie, utilisation ou nom (appui long sur une case vide → Ranger cette page), avec « Annuler ».
+- Réponse rapide : appui long sur une appli qui a un message, réponds sans l'ouvrir.
+- Dock qui se cache sur l'écran interne pendant que tu changes de page.
+- Mises à jour vérifiées toutes les 6 heures (réglable).

@@ -82,6 +82,11 @@
             <intent-filter><action android:name="android.service.notification.NotificationListenerService" /></intent-filter>
         </service>
         <receiver android:name=".UpdateReceiver" android:exported="false" />
+        <service android:name=".HoloWallpaper" android:exported="true" android:label="@string/app_name"
+            android:permission="android.permission.BIND_WALLPAPER">
+            <intent-filter><action android:name="android.service.wallpaper.WallpaperService" /></intent-filter>
+            <meta-data android:name="android.service.wallpaper" android:resource="@xml/holo_wallpaper" />
+        </service>
         <service android:name=".UpdateJob" android:exported="false" android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 </manifest>

@@ -41,7 +41,9 @@ class BadgeService : NotificationListenerService() {
                 val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty()
                 val text = (extras.getCharSequence(Notification.EXTRA_BIG_TEXT) ?: extras.getCharSequence(Notification.EXTRA_TEXT))?.toString().orEmpty()
                 if (title.isBlank() && text.isBlank()) null
-                else NotificationPreview(sbn.key, title, text, sbn.postTime, sbn.notification.contentIntent)
+                else NotificationPreview(sbn.key, title, text, sbn.postTime, sbn.notification.contentIntent,
+                    // The app's own "Reply" action (the one with a free text field), when it offers one.
+                    sbn.notification.actions?.firstOrNull { a -> a.remoteInputs?.any { it.allowFreeFormInput } == true })
             }
         }.filterValues { it.isNotEmpty() }
     }
@@ -63,6 +65,17 @@ class BadgeService : NotificationListenerService() {
             true
         }.getOrDefault(false)
 
+        /** Sends [text] through the notification's "Reply" action, as if typed in the notification shade. */
+        fun reply(context: Context, preview: NotificationPreview, text: String): Boolean = runCatching {
+            val action = preview.reply ?: return false
+            val inputs = action.remoteInputs ?: return false
+            val results = android.os.Bundle().apply { inputs.filter { it.allowFreeFormInput }.forEach { putCharSequence(it.resultKey, text) } }
+            val intent = android.content.Intent()
+            android.app.RemoteInput.addResultsToIntent(inputs, intent, results)
+            action.actionIntent.send(context, 0, intent)
+            true
+        }.getOrDefault(false)
+
         fun hasAccess(context: Context): Boolean {
             val enabled = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners") ?: return false
             val me = ComponentName(context, BadgeService::class.java)
@@ -71,7 +84,8 @@ class BadgeService : NotificationListenerService() {
     }
 }
 
-data class NotificationPreview(val key: String, val title: String, val text: String, val time: Long, val intent: android.app.PendingIntent?)
+data class NotificationPreview(val key: String, val title: String, val text: String, val time: Long, val intent: android.app.PendingIntent?,
+    val reply: Notification.Action? = null)
 
 // ---------- Now playing ----------
 

@@ -29,6 +29,9 @@ private val PRESETS = mapOf(
     "menthe" to Palette(Color(0xFFB5FFCB), Color(0xFF8CF5E6), Color(0xFFD9FF9E), Color(0xFF3DDC97), Color(0xFF2EC4B6), Color(0xFFA6E22E)),
 )
 
+/** The palette for a settings key; the wallpaper choice falls back to holographic (used by the live wallpaper itself). */
+fun paletteForKey(key: String): Palette = PRESETS[key] ?: Holo.HOLO
+
 /** Colours of the phone's wallpaper, softened for text and kept vivid for the glows. Null when Android gives none. */
 fun wallpaperPalette(context: Context): Palette? = runCatching {
     val colors = WallpaperManager.getInstance(context).getWallpaperColors(WallpaperManager.FLAG_SYSTEM) ?: return null

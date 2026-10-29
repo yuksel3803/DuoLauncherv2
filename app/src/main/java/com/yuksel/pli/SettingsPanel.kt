@@ -59,6 +59,7 @@ import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Interests
 import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.ColorLens
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.Gesture
 import androidx.compose.material.icons.rounded.SystemUpdate
@@ -141,7 +142,7 @@ private enum class SettingsCategory(val label: String, val icon: ImageVector, va
     HOME("Accueil", Icons.Rounded.PhoneAndroid, listOf("Grille" to Icons.Rounded.GridView, "Dock" to Icons.Rounded.Dock,
         "Horloge" to Icons.Rounded.Schedule, "Pages" to Icons.Rounded.ViewCarousel, "Suggestions" to Icons.Rounded.AutoAwesome,
         "Pliage" to Icons.Rounded.Devices)),
-    APPS("Applis", Icons.Rounded.Apps, listOf("Masquées" to Icons.Rounded.VisibilityOff, "Ajout" to Icons.Rounded.AddToHomeScreen)),
+    APPS("Applis", Icons.Rounded.Apps, listOf("Masquées" to Icons.Rounded.VisibilityOff, "Coffre" to Icons.Rounded.Lock, "Ajout" to Icons.Rounded.AddToHomeScreen)),
     WIDGETS("Widgets", Icons.Rounded.Widgets, listOf("Météo" to Icons.Rounded.WbSunny, "Notifications" to Icons.Rounded.Notifications)),
     GESTURES("Gestes", Icons.Rounded.Swipe, listOf("Gestes" to Icons.Rounded.TouchApp, "Dessins" to Icons.Rounded.Gesture)),
     GENERAL("Paramètres", Icons.Rounded.Settings, listOf("Général" to Icons.Rounded.Tune, "Sauvegarde" to Icons.Rounded.Backup, "Mises à jour" to Icons.Rounded.SystemUpdate)),
@@ -170,18 +171,19 @@ object ScreenShapes {
 
 /** Words that find each settings page from the search field. */
 private val SETTINGS_INDEX: Map<String, String> = mapOf(
-    "Fond" to "fond holographique halos animes fond d ecran wallpaper parallaxe arriere-plan",
+    "Fond" to "fond holographique halos animes fond d ecran wallpaper parallaxe arriere-plan meteo vivante pluie neige verrouillage anime",
     "Couleurs" to "couleurs palette aurore ocean braise menthe fond d ecran jour nuit ambiance halos vivants theme",
     "Icônes" to "pack d icones teintees noms des applis etiquettes labels",
     "Forme" to "forme des icones rond carre squircle goutte feuille cadre de verre bulles",
     "Animations" to "ouverture des applis animation holographique systeme changement de page cube profondeur fondu carrousel effet",
     "Grille" to "grille colonnes lignes ecran externe interne taille",
-    "Dock" to "dock taille applis recentes",
-    "Horloge" to "horloge recherche google finder bouton",
+    "Dock" to "dock taille applis recentes cacher masquer automatique",
+    "Horloge" to "horloge recherche google finder bouton style analogique aiguilles lettres grasse",
     "Pages" to "pages verrouiller disposition actus nouvelles applis",
     "Suggestions" to "suggestions contexte voiture casque pastille nouveau nouvelles applis",
     "Pliage" to "pliage continuite miroir chevalet plier deplier flex charniere",
     "Masquées" to "applis masquees cachees afficher",
+    "Coffre" to "coffre secret cacher empreinte prive verrou",
     "Ajout" to "ajout nouvelles applis installation",
     "Météo" to "meteo ville position temperature",
     "Notifications" to "notifications pastilles badges orbite musique acces",
@@ -444,6 +446,15 @@ private fun SettingsOptions(
             ToggleRow("Fond holographique", if (s.phoneWallpaper) "Ton fond d’écran du téléphone est utilisé" else "Noir profond avec halos de couleur",
                 !s.phoneWallpaper) { v -> launcher.updateSettings { it.copy(phoneWallpaper = !v) } }
             ToggleRow("Halos animés", "Les couleurs bougent quand tu inclines le téléphone", s.parallax) { v -> launcher.updateSettings { it.copy(parallax = v) } }
+            ActionRow("Fond d’écran animé du téléphone", "Les halos holographiques sur l’écran de verrouillage (et l’accueil si tu veux), dans ta palette", "Appliquer") {
+                runCatching {
+                    context.startActivity(android.content.Intent(android.app.WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER)
+                        .putExtra(android.app.WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, android.content.ComponentName(context, HoloWallpaper::class.java))
+                        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+                }.onFailure { android.widget.Toast.makeText(context, "Choisis « Fold Launcher Pro » dans les fonds d’écran animés", android.widget.Toast.LENGTH_LONG).show() }
+            }
+            ToggleRow("Météo vivante", "Pluie, neige, orage ou brouillard dessinés légèrement sur le fond quand la météo l’annonce", s.liveWeather) { v ->
+                launcher.updateSettings { it.copy(liveWeather = v) } }
             ActionRow("Changer le fond d’écran du téléphone", "Utilisé quand le fond holographique est coupé", "Ouvrir") {
                 runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_SET_WALLPAPER).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
@@ -540,12 +551,22 @@ private fun SettingsOptions(
             ChoiceRow("Écran interne", "Jusqu’à 10 ; celles en plus n’apparaissent que dépliées", (s.dockSize..10).toList(), s.innerDockSize.coerceAtLeast(s.dockSize)) { v ->
                 launcher.updateSettings { it.copy(innerDockSize = v) } }
             ChoiceRow("Applis récentes au bout du dock (interne)", null, listOf(0, 1, 2, 3), s.recentInDock) { v -> launcher.updateSettings { it.copy(recentInDock = v) } }
+            ToggleRow("Dock qui se cache (interne)", "Il glisse vers le bas pendant que tu changes de page et revient dès que tu t’arrêtes", s.autoHideDock) { v ->
+                launcher.updateSettings { it.copy(autoHideDock = v) } }
         }
-        SettingsCategory.HOME to "Horloge" -> Section("À droite de l’horloge") {
+        SettingsCategory.HOME to "Horloge" -> { Section("Style de l’horloge") {
+            Row(Modifier.padding(16.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CLOCK_STYLES.forEach { (key, name) -> PillButton(name, highlighted = s.clockStyle == key) { launcher.updateSettings { it.copy(clockStyle = key) } } }
+            }
+            Text(when (s.clockStyle) { "words" -> "Exemple : « ${timeInWords(java.time.LocalDateTime.now())} »"; "analog" -> "Un cadran holographique à aiguilles"
+                "bold" -> "Chiffres épais"; else -> "Chiffres fins irisés" }, color = Holo.Muted, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp))
+        }
+        Section("À droite de l’horloge") {
             val choices = listOf("google" to "Recherche Google", "finder" to "Finder Samsung", "pli" to "Recherche Fold Launcher Pro", "none" to "Rien")
             Row(Modifier.padding(16.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 choices.forEach { (key, name) -> PillButton(name, highlighted = s.headerSearch == key) { launcher.updateSettings { it.copy(headerSearch = key) } } }
             }
+        }
         }
         SettingsCategory.HOME to "Pages" -> Section("Pages d’accueil") {
             ToggleRow("Verrouiller la disposition", "Empêche de déplacer ou retirer des icônes par erreur", s.lockLayout) { v -> launcher.updateSettings { it.copy(lockLayout = v) } }
@@ -589,6 +610,12 @@ private fun SettingsOptions(
                     PillButton("Afficher") { launcher.unhide(id) }
                 }
             }
+        }
+        SettingsCategory.APPS to "Coffre" -> Section("Coffre secret") {
+            Text("Les applis du coffre disparaissent de l’accueil, du dock, de la liste et de la recherche. On l’ouvre avec un geste choisi dans Gestes (« Coffre secret »), puis l’empreinte ou le code du téléphone.",
+                color = Holo.Soft, fontSize = 13.sp, modifier = Modifier.padding(16.dp))
+            Text("Pour y mettre une appli : appui long sur l’appli → « Mettre au coffre secret », ou « Ajouter » dans le coffre. Il contient ${launcher.vault.size} appli" + if (launcher.vault.size > 1) "s." else ".",
+                color = Holo.Muted, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 14.dp))
         }
         SettingsCategory.APPS to "Ajout" -> Section("Nouvelles applis") {
             ToggleRow("Ajouter à l’accueil à l’installation", "Sur les deux écrans, dans la première case libre", s.addNewApps) { v -> launcher.updateSettings { it.copy(addNewApps = v) } }
@@ -697,7 +724,7 @@ internal fun WeatherSettings(launcher: Launcher, onLocation: () -> Unit, onWeath
 }
 
 private val GESTURE_ACTIONS = listOf("none" to "Rien", "lock" to "Verrouiller", "notifications" to "Notifications",
-    "search" to "Recherche", "drawer" to "Toutes les applis", "draw" to "Dessiner pour lancer")
+    "search" to "Recherche", "drawer" to "Toutes les applis", "draw" to "Dessiner pour lancer", "vault" to "Coffre secret")
 
 @Composable
 private fun GestureRow(title: String, value: String, launcher: Launcher, onPick: () -> Unit, onSelect: (String) -> Unit) {
@@ -719,7 +746,7 @@ private fun GestureRow(title: String, value: String, launcher: Launcher, onPick:
 }
 
 @Composable
-private fun AppPick(launcher: Launcher, modifier: Modifier, onClose: () -> Unit, onPick: (AppInfo) -> Unit) {
+internal fun AppPick(launcher: Launcher, modifier: Modifier, onClose: () -> Unit, onPick: (AppInfo) -> Unit) {
     var filter by remember { mutableStateOf("") }
     val apps = launcher.visibleApps
     val shown = remember(filter, apps) { if (filter.isBlank()) apps else matchApps(apps, filter) }

@@ -8,6 +8,7 @@ import android.provider.Telephony
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.asAndroidBitmap
 import org.json.JSONArray
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -31,8 +32,15 @@ class Launcher(private val context: Context) {
 
     private fun iconStyle() = AppRepository.IconStyle(settings.iconPack, settings.tintedIcons)
 
+    /** Apps in the secret vault (never shown outside it). */
+    var vault by mutableStateOf(store.vault); private set
+    /** Everything kept out of sight: hidden apps and the vault. */
+    val concealed: Set<String> get() = layout.hidden + vault
+
     /** Apps the user did not hide, sorted by name. */
-    val visibleApps get() = apps.filter { it.id !in layout.hidden }
+    val visibleApps get() = apps.filter { it.id !in concealed }
+    /** [byId] without hidden and vault apps. */
+    val visibleById: Map<String, AppInfo> get() = byId.filterKeys { it !in concealed }
 
     suspend fun start() {
         settings = store.loadSettings()
@@ -84,7 +92,7 @@ class Launcher(private val context: Context) {
             update { LayoutEdits.clean(it, keep + byId.keys) }
         }
         if (addedPackage != null && settings.addNewApps) {
-            val added = list.filter { it.packageName == addedPackage && it.id !in layout.hidden }
+            val added = list.filter { it.packageName == addedPackage && it.id !in concealed }
             if (added.isNotEmpty()) update { l ->
                 added.fold(l) { acc, app -> Screen.entries.fold(acc) { a, s -> LayoutEdits.addToHome(a, s, app.id) } }
             }
@@ -144,8 +152,8 @@ class Launcher(private val context: Context) {
         if (id == HomeLayout.COVERED) return@map id
         val shown = when {
             id == HomeLayout.EMPTY -> false
-            HomeLayout.isFolder(id) -> layout.folders[id]?.apps?.any { it in byId && it !in layout.hidden } == true
-            else -> id in byId && id !in layout.hidden
+            HomeLayout.isFolder(id) -> layout.folders[id]?.apps?.any { it in byId && it !in concealed } == true
+            else -> id in byId && id !in concealed
         }
         if (shown) id else HomeLayout.EMPTY
     }
@@ -166,10 +174,10 @@ class Launcher(private val context: Context) {
         }
     }
 
-    fun visibleDock(screen: Screen): List<String> = layout.dockOf(screen).filter { it in byId && it !in layout.hidden }
+    fun visibleDock(screen: Screen): List<String> = layout.dockOf(screen).filter { it in byId && it !in concealed }
 
     fun folderApps(folderId: String): List<AppInfo> =
-        layout.folders[folderId]?.apps?.mapNotNull { byId[it] }?.filter { it.id !in layout.hidden } ?: emptyList()
+        layout.folders[folderId]?.apps?.mapNotNull { byId[it] }?.filter { it.id !in concealed } ?: emptyList()
 
     fun hide(app: AppInfo) = edit("${app.label} masquée") { l ->
         val folders = l.folders.mapValues { (_, f) -> f.copy(apps = f.apps - app.id) }
@@ -179,6 +187,66 @@ class Launcher(private val context: Context) {
     }
 
     fun unhide(id: String) = update { it.copy(hidden = it.hidden - id) }
+
+    /** Moves an app into the vault: off the home screens, dock and folders, out of the list and search. */
+    fun toVault(app: AppInfo) {
+        edit("${app.label} mise au coffre") { l ->
+            val folders = l.folders.mapValues { (_, f) -> f.copy(apps = f.apps - app.id) }
+            LayoutEdits.clean(l.copy(dock = l.dock - app.id, dockExtra = l.dockExtra - app.id, folders = folders)
+                .withHome(Screen.COVER, LayoutEdits.blank(l.cover, setOf(app.id))).withHome(Screen.INNER, LayoutEdits.blank(l.inner, setOf(app.id))),
+                byId.keys + l.cover + l.inner + l.dock + l.dockExtra + l.folders.values.flatMap { it.apps } - app.id)
+        }
+        vault = vault + app.id; store.vault = vault
+        val s = settings
+        if ("vault" !in listOf(s.doubleTap, s.twoFingerUp, s.twoFingerDown))
+            android.widget.Toast.makeText(context, "Pour rouvrir le coffre, choisis le geste « Coffre secret » dans Réglages → Gestes",
+                android.widget.Toast.LENGTH_LONG).show()
+    }
+
+    /** Takes an app out of the vault; it comes back in the app list (and on the home screen if "add new apps" is on). */
+    fun fromVault(id: String) {
+        vault = vault - id; store.vault = vault
+        if (settings.addNewApps) update { l -> Screen.entries.fold(l) { a, sc -> LayoutEdits.addToHome(a, sc, id) } }
+    }
+
+    /** Sorts one page: "name", "category", "usage" or "color". The previous order can be taken back with "Annuler". */
+    fun sortPage(screen: Screen, page: Int, capacity: Int, mode: String) {
+        val ids = layout.home(screen).drop(page * capacity).take(capacity).filter { it.isNotEmpty() && it != HomeLayout.COVERED }
+        val collator = java.text.Collator.getInstance(java.util.Locale.FRANCE).apply { strength = java.text.Collator.PRIMARY }
+        fun label(id: String) = if (HomeLayout.isFolder(id)) layout.folders[id]?.title.orEmpty() else byId[id]?.label.orEmpty()
+        val byName = compareBy<String, String>(collator) { label(it) }
+        val order = when (mode) {
+            "category" -> ids.sortedWith(compareBy<String> { id -> if (HomeLayout.isFolder(id)) 999 else (byId[id]?.category ?: -1).let { if (it < 0) 998 else it } }.then(byName))
+            "usage" -> { val counts = UsageLog.counts(context); ids.sortedWith(compareByDescending<String> { counts[it] ?: 0 }.then(byName)) }
+            "color" -> { val keys = ids.associateWith { id -> colorKey(if (HomeLayout.isFolder(id)) folderApps(id).firstOrNull() else byId[id]) }
+                ids.sortedWith(compareBy<String> { keys[it] ?: 9f }.then(byName)) }
+            else -> ids.sortedWith(byName)
+        }
+        val names = mapOf("name" to "par nom", "category" to "par catégorie", "usage" to "par utilisation", "color" to "par couleur")
+        edit("Page rangée ${names[mode] ?: ""}") { LayoutEdits.sortPage(it, screen, page, capacity, order) }
+    }
+
+    /** Hue of an icon's main colour, 0..1; greys, blacks and whites come after (1..2, by lightness). */
+    private fun colorKey(app: AppInfo?): Float {
+        app ?: return 9f
+        return runCatching {
+            val source = app.icon.asAndroidBitmap()
+            val small = android.graphics.Bitmap.createScaledBitmap(source.copy(android.graphics.Bitmap.Config.ARGB_8888, false), 16, 16, true)
+            var sx = 0.0; var sy = 0.0; var weight = 0.0; var light = 0.0; var n = 0
+            val hsv = FloatArray(3)
+            for (x in 0 until 16) for (y in 0 until 16) {
+                val c = small.getPixel(x, y)
+                if (android.graphics.Color.alpha(c) < 128) continue
+                android.graphics.Color.colorToHSV(c, hsv)
+                val w = (hsv[1] * hsv[2]).toDouble()
+                val a = Math.toRadians(hsv[0].toDouble())
+                sx += kotlin.math.cos(a) * w; sy += kotlin.math.sin(a) * w; weight += w; light += hsv[2]; n++
+            }
+            if (n == 0) return 9f
+            if (weight / n < .18) 1f + (1f - (light / n).toFloat())
+            else ((Math.toDegrees(kotlin.math.atan2(sy, sx)) + 360) % 360 / 360.0).toFloat()
+        }.getOrDefault(9f)
+    }
 
     fun recordLaunch(app: AppInfo, screen: Screen) {
         UsageLog.record(context, app.id)
@@ -194,7 +262,7 @@ class Launcher(private val context: Context) {
     /** Apps installed in the last 7 days (after Fold Launcher Pro itself) and not opened since. */
     fun newApps(): Set<String> {
         val since = maxOf(System.currentTimeMillis() - 7 * 86_400_000L, selfInstalled)
-        return apps.filter { it.installedAt > since && !UsageLog.openedSince(context, it.id, it.installedAt) }.map { it.id }.toSet()
+        return apps.filter { it.id !in concealed }.filter { it.installedAt > since && !UsageLog.openedSince(context, it.id, it.installedAt) }.map { it.id }.toSet()
     }
 
     /** Reloads everything after a backup was imported. */
@@ -278,6 +346,9 @@ object UsageLog {
         }
         return out.mapNotNull { apps[it] }
     }
+
+    /** How many times each app was opened (from the kept history). */
+    fun counts(context: Context): Map<String, Int> = synchronized(this) { all(context).groupingBy { it.first }.eachCount() }
 
     /** True when [appId] was opened after [since]. */
     fun openedSince(context: Context, appId: String, since: Long): Boolean = synchronized(this) {

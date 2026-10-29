@@ -55,6 +55,12 @@ data class PliSettings(
     val tabletop: Boolean = true,
     /** Unread notifications as bubbles orbiting the icon instead of a number. */
     val orbitBadges: Boolean = false,
+    /** Clock look: "fine", "bold", "analog" or "words". */
+    val clockStyle: String = "fine",
+    /** Rain, snow, storm or fog drawn lightly over the backdrop when the weather says so. */
+    val liveWeather: Boolean = true,
+    /** Inner screen: the dock slips away while pages scroll and comes back when they stop. */
+    val autoHideDock: Boolean = false,
 )
 
 /** Saves the layout, the settings and the quick note in private preferences. */
@@ -109,6 +115,9 @@ class Store(context: Context) {
         pageTransition = prefs.getString("pageTransition", "classic") ?: "classic",
         tabletop = prefs.getBoolean("tabletop", true),
         orbitBadges = prefs.getBoolean("orbitBadges", false),
+        clockStyle = prefs.getString("clockStyle", "fine") ?: "fine",
+        liveWeather = prefs.getBoolean("liveWeather", true),
+        autoHideDock = prefs.getBoolean("autoHideDock", false),
     )
 
     fun saveSettings(s: PliSettings) {
@@ -128,7 +137,8 @@ class Store(context: Context) {
             .putBoolean("continuity", s.continuity).putBoolean("coverMirror", s.coverMirror).putString("suggestions", s.suggestions)
             .putBoolean("newBadge", s.newBadge).putString("palette", s.palette).putString("dayNight", s.dayNight)
             .putBoolean("livingHalos", s.livingHalos).putString("pageTransition", s.pageTransition)
-            .putBoolean("tabletop", s.tabletop).putBoolean("orbitBadges", s.orbitBadges).apply()
+            .putBoolean("tabletop", s.tabletop).putBoolean("orbitBadges", s.orbitBadges)
+            .putString("clockStyle", s.clockStyle).putBoolean("liveWeather", s.liveWeather).putBoolean("autoHideDock", s.autoHideDock).apply()
     }
 
     /** Everything Pli saved (layout, settings, note) as one JSON document. Android widgets are left out: they belong to this phone. */
@@ -137,7 +147,7 @@ class Store(context: Context) {
         return JSONObject().put("app", "Pli").put("version", 1)
             .put("layout", layout.copy(today = layout.today.filterNot { it.isAndroid }).toJson())
             .put("settings", JSONObject().apply {
-                prefs.all.forEach { (key, value) -> if (key != "layout" && key != "note" && value != null) put(key, value) }
+                prefs.all.forEach { (key, value) -> if (key != "layout" && key != "note" && key != "vault" && value != null) put(key, value) }
             })
             .put("note", note)
     }
@@ -162,6 +172,11 @@ class Store(context: Context) {
         edit.apply()
         return true
     }
+
+    /** Apps in the secret vault: hidden everywhere, opened only after the fingerprint. */
+    var vault: Set<String>
+        get() = prefs.getStringSet("vault", emptySet())?.toSet() ?: emptySet()
+        set(value) { prefs.edit().putStringSet("vault", value).apply() }
 
     var note: String
         get() = prefs.getString("note", "") ?: ""

@@ -277,7 +277,7 @@ fun SearchPanel(launcher: Launcher, modifier: Modifier, onOpen: (AppInfo, Rect?)
         if (query.isNotBlank()) SearchLearning.record(context, query, app.id)
         onOpen(app, bounds)
     }
-    val suggestions = remember(apps) { UsageLog.suggestions(context, launcher.byId, 8).ifEmpty { launcher.visibleDock(Screen.COVER).mapNotNull(launcher.byId::get) } }
+    val suggestions = remember(apps) { UsageLog.suggestions(context, launcher.visibleById, 8).ifEmpty { launcher.visibleDock(Screen.COVER).mapNotNull(launcher.byId::get) } }
     val calc = remember(query) { evaluateCalculation(query) }
     // Direct actions: timer, alarm, reminder, conversions, currencies, call or text a contact.
     val instant = remember(query) { QuickActions.instant(query) }

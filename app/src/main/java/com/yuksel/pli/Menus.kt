@@ -71,6 +71,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -200,6 +202,11 @@ fun AppMenu(request: MenuRequest, launcher: Launcher, currentScreen: Screen, onD
                             }
                             if (n.text.isNotBlank()) Text(n.text, color = Holo.Soft, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.padding(start = 15.dp, top = 2.dp))
+                            if (n.reply != null && n == previews.first()) QuickReply(app.label) { text ->
+                                val sent = BadgeService.reply(context, n, text)
+                                android.widget.Toast.makeText(context, if (sent) "Réponse envoyée" else "Réponse impossible, ouvre l’appli", android.widget.Toast.LENGTH_SHORT).show()
+                                if (sent) onDismiss()
+                            }
                         }
                     }
                 }
@@ -260,6 +267,7 @@ fun AppMenu(request: MenuRequest, launcher: Launcher, currentScreen: Screen, onD
                 }
                 MenuRow(Icons.Rounded.Info, "Infos sur l’appli") { onInfo(app); onDismiss() }
                 if (!locked) MenuRow(Icons.Rounded.VisibilityOff, "Masquer l’appli") { launcher.hide(app); onDismiss() }
+                if (!locked && !app.work) MenuRow(Icons.Rounded.Lock, "Mettre au coffre secret") { launcher.toVault(app); onDismiss() }
                 MenuRow(Icons.Rounded.Delete, "Désinstaller", Holo.Pink) { onUninstall(app); onDismiss() }
             }
         }
@@ -270,7 +278,9 @@ fun AppMenu(request: MenuRequest, launcher: Launcher, currentScreen: Screen, onD
 @Composable
 fun HomeMenu(onDismiss: () -> Unit, onWidgets: (() -> Unit)?, onSettings: () -> Unit, onApps: () -> Unit, onToday: (() -> Unit)?,
     onAddPage: () -> Unit, onDeletePage: (() -> Unit)?, onSelect: () -> Unit = {}, onAddApps: () -> Unit = {},
-    locked: Boolean = false, onLock: (Boolean) -> Unit = {}, copyFrom: String? = null, onCopy: () -> Unit = {}) {
+    locked: Boolean = false, onLock: (Boolean) -> Unit = {}, copyFrom: String? = null, onCopy: () -> Unit = {},
+    onSort: ((String) -> Unit)? = null) {
+    var sorting by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxSize()) {
         Scrim(.35f, onDismiss)
         Anchored(Rect.Zero) {
@@ -282,6 +292,15 @@ fun HomeMenu(onDismiss: () -> Unit, onWidgets: (() -> Unit)?, onSettings: () -> 
                     MenuRow(Icons.Rounded.AddBox, "Ajouter une page") { onDismiss(); onAddPage() }
                     if (onDeletePage != null) MenuRow(Icons.Rounded.DeleteSweep, "Supprimer cette page", Holo.Pink) { onDismiss(); onDeletePage() }
                     if (copyFrom != null) MenuRow(Icons.Rounded.ContentCopy, "Copier la disposition de $copyFrom") { onDismiss(); onCopy() }
+                    if (onSort != null) {
+                        MenuRow(Icons.Rounded.Sort, if (sorting) "Ranger cette page…" else "Ranger cette page") { sorting = !sorting }
+                        if (sorting) listOf("color" to "Par couleur", "category" to "Par catégorie", "usage" to "Par utilisation", "name" to "Par nom").forEach { (key, name) ->
+                            Row(Modifier.fillMaxWidth().heightIn(min = 44.dp).padding(start = 18.dp).clip(RoundedCornerShape(14.dp))
+                                .clickable { onDismiss(); onSort(key) }.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(name, color = Holo.Violet, fontSize = 14.sp)
+                            }
+                        }
+                    }
                 }
                 MenuRow(if (locked) Icons.Rounded.LockOpen else Icons.Rounded.Lock, if (locked) "Déverrouiller la disposition" else "Verrouiller la disposition") {
                     onDismiss(); onLock(!locked)
@@ -357,3 +376,25 @@ fun appStorage(context: android.content.Context, app: AppInfo): String? = runCat
     fun mb(bytes: Long) = if (bytes >= 1_000_000_000) "%.1f Go".format(java.util.Locale.FRANCE, bytes / 1e9) else "${bytes / 1_000_000} Mo"
     "Appli ${mb(stats.appBytes)} · données ${mb(stats.dataBytes - stats.cacheBytes)} · cache ${mb(stats.cacheBytes)}"
 }.getOrNull()
+
+/** A small field to answer a message straight from the menu, through the app's own notification reply. */
+@Composable
+private fun QuickReply(appLabel: String, onSend: (String) -> Unit) {
+    var draft by remember { mutableStateOf("") }
+    fun send() { val t = draft.trim(); if (t.isNotEmpty()) { onSend(t); draft = "" } }
+    Row(Modifier.fillMaxWidth().padding(start = 15.dp, top = 8.dp).height(42.dp).glass(RoundedCornerShape(50), .07f)
+        .padding(start = 14.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.weight(1f)) {
+            if (draft.isEmpty()) Text("Répondre dans $appLabel…", color = Holo.Muted, fontSize = 13.sp, maxLines = 1)
+            androidx.compose.foundation.text.BasicTextField(draft, { draft = it }, Modifier.fillMaxWidth(), singleLine = true,
+                textStyle = androidx.compose.ui.text.TextStyle(color = Holo.Ink, fontSize = 13.sp),
+                cursorBrush = androidx.compose.ui.graphics.SolidColor(Holo.Violet),
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Send),
+                keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSend = { send() }))
+        }
+        Box(Modifier.size(34.dp).clip(CircleShape).background(androidx.compose.ui.graphics.Brush.linearGradient(Holo.Iridescent), CircleShape)
+            .clickable { send() }.semantics { contentDescription = "Envoyer" }, contentAlignment = Alignment.Center) {
+            Icon(Icons.AutoMirrored.Rounded.Send, null, tint = androidx.compose.ui.graphics.Color(0xFF120A22), modifier = Modifier.size(16.dp))
+        }
+    }
+}

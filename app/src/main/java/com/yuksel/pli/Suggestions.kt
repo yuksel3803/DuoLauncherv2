@@ -82,7 +82,7 @@ private fun clockPackage(context: Context): String? = runCatching {
  */
 fun suggestionFor(context: Context, launcher: Launcher, today: TodayState, playing: String?, exclude: Set<String>, mode: String): Suggestion? {
     if (mode == "off") return null
-    val usual = UsageLog.suggestions(context, launcher.byId, 60)
+    val usual = UsageLog.suggestions(context, launcher.visibleById, 60)
     val rank = usual.withIndex().associate { (i, app) -> app.id to i }
     val visible = launcher.visibleApps.filter { it.id !in exclude && !it.work }
     fun pick(vararg categories: Int, first: String? = null): List<AppInfo> {

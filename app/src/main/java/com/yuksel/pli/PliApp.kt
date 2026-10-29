@@ -110,7 +110,7 @@ class HostSignals {
     var updateTaps by mutableIntStateOf(0)
 }
 
-private enum class Panel { NONE, SEARCH, DRAWER, SETTINGS, WIDGETS, HOME_MENU, ADD_APPS, GUIDE, ONBOARDING, DRAW }
+private enum class Panel { NONE, SEARCH, DRAWER, SETTINGS, WIDGETS, HOME_MENU, ADD_APPS, GUIDE, ONBOARDING, DRAW, VAULT }
 
 /**
  * Swipe up / down on the home screen. It watches the touch before the icons and pages do
@@ -231,6 +231,7 @@ fun PliApp(host: PliHost, signals: HostSignals) {
             action == "search" -> panel = Panel.SEARCH
             action == "drawer" -> panel = Panel.DRAWER
             action == "draw" -> panel = Panel.DRAW
+            action == "vault" -> host.authenticate("Ouvrir le coffre secret") { panel = Panel.VAULT }
             action.startsWith("app:") -> launcher.byId[action.removePrefix("app:")]?.let { open(it, null) }
         }
     }
@@ -252,11 +253,13 @@ fun PliApp(host: PliHost, signals: HostSignals) {
         if (launcher.settings.newBadge) launcher.newApps() else emptySet()
     }
     CompositionLocalProvider(LocalBubbles provides launcher.settings.bubbles, LocalIconShape provides launcher.settings.iconShape, LocalBadges provides badges, LocalSelection provides selection,
-        LocalNewApps provides newApps, LocalOrbitBadges provides launcher.settings.orbitBadges, LocalMotion provides !launcher.lowPower,
+        LocalNewApps provides newApps, LocalClockStyle provides launcher.settings.clockStyle, LocalOrbitBadges provides launcher.settings.orbitBadges, LocalMotion provides !launcher.lowPower,
         LocalPageTransition provides if (launcher.lowPower) "classic" else launcher.settings.pageTransition,
         androidx.compose.ui.platform.LocalHapticFeedback provides if (launcher.settings.haptics) androidx.compose.ui.platform.LocalHapticFeedback.current else NoHaptics) {
         Box(Modifier.fillMaxSize()) {
             HoloBackground(launcher.settings.phoneWallpaper, launcher.settings.parallax && !launcher.lowPower)
+            // Rain, snow, storm or fog over the backdrop, only while the home screen is visible and the battery is fine.
+            if (launcher.settings.liveWeather && onScreen && !launcher.lowPower && panel == Panel.NONE) WeatherEffect(today.weather?.sky)
             // Home ignores the keyboard so the grid never changes size while typing.
             if (launcher.loaded) BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout))) {
                 val wide = maxWidth >= 600.dp
@@ -334,6 +337,7 @@ fun PliApp(host: PliHost, signals: HostSignals) {
                 }, onClose = { panel = Panel.NONE })
             }
             FullPanel(panel == Panel.GUIDE) { m -> GestureGuide(m) { panel = Panel.SETTINGS } }
+            FullPanel(panel == Panel.VAULT) { m -> VaultPanel(launcher, m, onOpen = { a, r -> open(a, r) }, onClose = { panel = Panel.NONE }) }
             FullPanel(panel == Panel.DRAW) { m ->
                 DrawPad(launcher, m, onOpen = { a, r -> open(a, r) }, onSettings = { settingsStart = "Dessins"; panel = Panel.SETTINGS },
                     onClose = { panel = Panel.NONE })
@@ -341,7 +345,7 @@ fun PliApp(host: PliHost, signals: HostSignals) {
             // Folded on a page the cover doesn't have: its apps, just this once.
             val mirrored = mirror
             if (mirrored != null && screen == Screen.COVER && panel == Panel.NONE && folder == null && menu == null) {
-                val apps = mirrored.mapNotNull(launcher.byId::get).filter { it.id !in launcher.layout.hidden }
+                val apps = mirrored.mapNotNull(launcher.byId::get).filter { it.id !in launcher.concealed }
                 if (apps.isEmpty()) SideEffect { mirror = null }
                 else MirrorSheet(apps, onOpen = { a, r -> open(a, r) }, onClose = { mirror = null })
             }
@@ -402,7 +406,8 @@ fun PliApp(host: PliHost, signals: HostSignals) {
                     onCopy = {
                         val other = if (menuScreen == Screen.INNER) Screen.COVER else Screen.INNER
                         launcher.edit("Disposition copiée") { LayoutEdits.copyHome(it, other, menuScreen) }
-                    })
+                    },
+                    onSort = { mode -> launcher.sortPage(menuScreen, page, cap, mode) })
             }
             folder?.let { (id, s) ->
                 FolderPanel(id, s, launcher, renameFolder, onDismiss = { folder = null }, onOpen = { app, r -> open(app, r) },
@@ -594,11 +599,20 @@ private fun InnerHome(host: PliHost, signals: HostSignals, today: TodayState, dr
         if (!signals.isDefaultHome) DefaultHomeBanner(host::requestDefaultHome, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp))
         val context = LocalContext.current
         val recents = remember(launcher.lastLaunch, launcher.layout.dock, launcher.layout.dockExtra, launcher.settings.recentInDock, launcher.byId) {
-            UsageLog.recent(context, launcher.byId, launcher.settings.recentInDock, launcher.layout.dockOf(Screen.INNER).toSet() + launcher.layout.hidden)
+            UsageLog.recent(context, launcher.byId, launcher.settings.recentInDock, launcher.layout.dockOf(Screen.INNER).toSet() + launcher.concealed)
         }
         val dockCount = (launcher.visibleDock(Screen.INNER).size + recents.size).coerceAtLeast(3)
+        // Optional: the dock slips down while pages scroll, and comes back shortly after they stop.
+        var dockAway by remember { mutableStateOf(false) }
+        val scrolling = pager.isScrollInProgress
+        LaunchedEffect(scrolling, launcher.settings.autoHideDock, drag.active) {
+            if (!launcher.settings.autoHideDock || drag.active) { dockAway = false; return@LaunchedEffect }
+            if (scrolling) dockAway = true else { delay(900); dockAway = false }
+        }
+        val dockShift by androidx.compose.animation.core.animateFloatAsState(if (dockAway) 1f else 0f, label = "dock")
         Dock(launcher, Screen.INNER, drag, 58.dp,
             Modifier.align(Alignment.CenterHorizontally).widthIn(max = (dockCount * 78 + 40).dp).fillMaxWidth()
+                .graphicsLayer { translationY = dockShift * size.height * 1.3f; alpha = 1f - dockShift }
                 .padding(start = 18.dp, end = 18.dp, bottom = 12.dp, top = 6.dp),
             onOpenApp = { a, r -> actions.open(a, r) }, onMenu = actions.menu, onCloseMenu = actions.closeMenu, onSearch = null,
             recents = recents)
