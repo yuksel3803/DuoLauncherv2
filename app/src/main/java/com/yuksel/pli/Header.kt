@@ -63,15 +63,7 @@ import java.util.Locale
 private val FR = Locale.FRANCE
 
 @Composable
-fun rememberNow(): LocalDateTime {
-    val now by produceState(LocalDateTime.now()) {
-        while (true) {
-            value = LocalDateTime.now()
-            delay(1000L * (60 - value.second).coerceAtLeast(1))
-        }
-    }
-    return now
-}
+fun rememberNow(): LocalDateTime = rememberMinute()
 
 fun skyIcon(sky: Sky): ImageVector = when (sky) {
     Sky.CLEAR -> Icons.Rounded.WbSunny

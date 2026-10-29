@@ -208,24 +208,14 @@ fun AppMenu(request: MenuRequest, launcher: Launcher, currentScreen: Screen, onD
                 }
                 if (shortcuts.isNotEmpty()) {
                     Divider()
-                    val favourite = launcher.layout.swipeShortcuts[app.id] ?: shortcuts.first().info.id
                     shortcuts.forEach { s ->
-                        val isFavourite = s.info.id == favourite
                         Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(16.dp))
                             .clickable { startAppShortcut(context, s); onDismiss() }.padding(start = 14.dp, end = 4.dp),
                             verticalAlignment = Alignment.CenterVertically) {
                             if (s.icon != null) Image(s.icon, null, Modifier.padding(end = 10.dp).size(22.dp).clip(CircleShape))
                             Text(s.label, color = Holo.Ink, fontSize = 15.sp, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            // The arrow marks the shortcut opened by swiping up on the icon; tap it to choose another.
-                            Box(Modifier.size(40.dp).clip(CircleShape).clickable {
-                                launcher.update { l -> l.copy(swipeShortcuts = l.swipeShortcuts + (app.id to s.info.id)) }
-                            }.semantics { contentDescription = "Ouvrir avec le glisser vers le haut" }, contentAlignment = Alignment.Center) {
-                                Icon(Icons.Rounded.SwipeUp, null, tint = if (isFavourite) Holo.Violet else Holo.Muted.copy(alpha = .4f), modifier = Modifier.size(18.dp))
-                            }
                         }
                     }
-                    Text("Glisse vers le haut sur l’icône pour ouvrir le raccourci marqué ↑", color = Holo.Muted, fontSize = 11.sp,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp))
                 }
                 Divider()
                 val layout = launcher.layout
@@ -299,7 +289,7 @@ fun HomeMenu(onDismiss: () -> Unit, onWidgets: (() -> Unit)?, onSettings: () -> 
                 if (onWidgets != null) MenuRow(Icons.Rounded.Widgets, "Ajouter un widget") { onDismiss(); onWidgets() }
                 if (onToday != null) MenuRow(Icons.Rounded.ViewDay, "Modifier « Aujourd’hui »") { onDismiss(); onToday() }
                 MenuRow(Icons.Rounded.Apps, "Toutes les applis") { onDismiss(); onApps() }
-                MenuRow(Icons.Rounded.Tune, "Réglages de Fold Launcher Pro") { onDismiss(); onSettings() }
+                MenuRow(Icons.Rounded.Tune, "Réglages") { onDismiss(); onSettings() }
             }
         }
     }

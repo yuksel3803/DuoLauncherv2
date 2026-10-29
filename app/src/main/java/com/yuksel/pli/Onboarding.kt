@@ -53,7 +53,6 @@ private data class GestureHelp(val icon: ImageVector, val title: String, val tex
 private val GESTURES = listOf(
     GestureHelp(Icons.Rounded.KeyboardArrowDown, "Glisser vers le bas", "Ouvre la recherche (applis, calcul, contacts, raccourcis, web). Tout en haut de l’écran : les notifications."),
     GestureHelp(Icons.Rounded.KeyboardArrowUp, "Glisser vers le haut", "Ouvre la liste de toutes les applis. Glisse vers le bas pour la refermer."),
-    GestureHelp(Icons.Rounded.SwipeUp, "Glisser vers le haut sur une icône", "Ouvre son raccourci favori (marqué ↑ dans le menu de l’appli)."),
     GestureHelp(Icons.Rounded.TouchApp, "Appui long sur une appli", "Raccourcis, aperçu des notifications, renommer, changer l’icône, protéger, masquer…"),
     GestureHelp(Icons.Rounded.PanTool, "Appui long puis glisser", "Déplace l’appli dans la case de ton choix ; garde-la au bord de l’écran pour changer de page."),
     GestureHelp(Icons.Rounded.CreateNewFolder, "Lâcher une appli sur une autre", "Crée un dossier. Appui long sur le dossier pour le mettre en grand (2×2, toute la largeur…)."),

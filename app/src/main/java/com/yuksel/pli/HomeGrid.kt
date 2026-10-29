@@ -145,7 +145,6 @@ class DragState {
     var locked = false
     /** The app under the finger right now (for "swipe up on an icon"). */
     var pressedId: String? = null
-    var onIconSwipeUp: (String) -> Unit = {}
 
     private fun hit(p: Offset): DropSpot? {
         if (trashRect != Rect.Zero && trashRect.inflate(12f).contains(p)) return DropSpot.Remove

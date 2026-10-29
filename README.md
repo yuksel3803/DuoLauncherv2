@@ -11,6 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/yuksel3803/DuoLauncherv2/releases"><b>⬇️ Télécharger le dernier APK</b></a>
+  &nbsp;·&nbsp; <a href="CHANGELOG.md">📋 Journal des versions</a>
   &nbsp;·&nbsp; Android 12 et plus &nbsp;·&nbsp; Kotlin + Jetpack Compose
 </p>
 
@@ -26,6 +27,7 @@
 - [Gestes](#gestes)
 - [Personnalisation](#personnalisation)
 - [Réglages](#réglages)
+- [Mises à jour](#mises-à-jour)
 - [Installation](#installation)
 - [Compilation et CI](#compilation-et-ci)
 - [Limites connues](#limites-connues)
@@ -105,10 +107,10 @@ Un Fold, c’est deux téléphones en un : un écran externe étroit qu’on uti
 | Geste | Action |
 | --- | --- |
 | Glisser vers le bas | Recherche (ou panneau de notifications, au choix) |
-| Glisser vers le haut sur une icône | Raccourci de l’appli (ex. nouveau message, appareil photo selfie) |
+| Glisser vers le haut | Liste de toutes les applis |
 | Double appui | Verrouiller l’écran (réglable) |
 | Deux doigts vers le haut / le bas | Action au choix |
-| Appui long sur une appli | Menu : renommer, changer d’icône, protéger, infos, stockage, désinstaller |
+| Appui long sur une appli | Menu : raccourcis, renommer, changer d’icône, protéger, infos, stockage, désinstaller |
 | Appui long sur le fond | Mode édition : déplacer, sélection multiple, corbeille, ajouter des pages |
 
 Un **guide des gestes** animé s’affiche au premier lancement, et reste accessible dans les réglages.
@@ -147,6 +149,16 @@ Les réglages sont organisés en **catégories** avec un **aperçu en direct** d
 - **Animations** : ouverture holographique des applis ou animation Android, retours haptiques.
 - **Batterie** : économie d’énergie automatique sous 20 % (plus de halos animés ni d’effet d’ouverture).
 - **Sauvegarde**, **Pastilles de notifications**, **Launcher par défaut**.
+
+---
+
+## Mises à jour
+
+Depuis la build 17, **Fold Launcher Pro se met à jour tout seul** : quand une nouvelle version sort, une fenêtre affiche les nouveautés avec un bouton « Mettre à jour ». Le téléchargement et l’installation se font dans l’appli, et la disposition est conservée.
+
+- Vérification automatique au plus toutes les 6 heures (désactivable), « Plus tard » la repousse d’une journée.
+- Vérification à la main : Réglages → Paramètres → Mises à jour.
+- Tout ce qui change à chaque version : **[Journal des versions](CHANGELOG.md)**.
 
 ---
 
@@ -209,5 +221,7 @@ Tout le code est dans [`app/src/main/java/com/yuksel/pli/`](app/src/main/java/co
 | `Holo.kt` | Fond holographique, halos, texte irisé, animation d’ouverture. |
 | `Services.kt`, `PliAccessibility.kt` | Pastilles de notifications et verrouillage par geste. |
 | `Store.kt` | Enregistrement des réglages, de la disposition et de la note. |
+| `Updater.kt` | Mises à jour intégrées : vérification sur GitHub, fenêtre des nouveautés, téléchargement et installation. |
+| `Perf.kt` | Travail suspendu quand le launcher n’est pas à l’écran (horloge, météo, capteurs). |
 
 > Le nom interne du code reste `pli` (nom de travail du projet) pour que les mises à jour s’installent par-dessus les versions déjà présentes.

@@ -50,6 +50,7 @@ import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Interests
 import androidx.compose.material.icons.rounded.Category
+import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -131,7 +132,7 @@ private enum class SettingsCategory(val label: String, val icon: ImageVector, va
     APPS("Applis", Icons.Rounded.Apps, listOf("Masquées" to Icons.Rounded.VisibilityOff, "Ajout" to Icons.Rounded.AddToHomeScreen)),
     WIDGETS("Widgets", Icons.Rounded.Widgets, listOf("Météo" to Icons.Rounded.WbSunny, "Notifications" to Icons.Rounded.Notifications)),
     GESTURES("Gestes", Icons.Rounded.Swipe, listOf("Gestes" to Icons.Rounded.TouchApp)),
-    GENERAL("Paramètres", Icons.Rounded.Settings, listOf("Général" to Icons.Rounded.Tune, "Sauvegarde" to Icons.Rounded.Backup)),
+    GENERAL("Paramètres", Icons.Rounded.Settings, listOf("Général" to Icons.Rounded.Tune, "Sauvegarde" to Icons.Rounded.Backup, "Mises à jour" to Icons.Rounded.SystemUpdate)),
 }
 
 /** One entry of the side rails: a round icon with its name; the chosen one glows. */
@@ -396,7 +397,29 @@ private fun SettingsOptions(
             ActionRow("Exporter ma disposition", "Pages, dossiers, dock, widgets Fold Launcher Pro et réglages dans un fichier", "Exporter", onExport)
             ActionRow("Importer une disposition", "Remplace la disposition actuelle", "Importer", onImport)
         }
+        SettingsCategory.GENERAL to "Mises à jour" -> UpdateSettings()
         else -> Unit
+    }
+}
+
+@Composable
+private fun UpdateSettings() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var auto by remember { mutableStateOf(Updater.automatic(context)) }
+    Section("Mises à jour") {
+        Text("Version installée : build ${Updater.currentBuild(context)}", color = Holo.Soft, fontSize = 14.sp,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp))
+        ToggleRow("Vérifier automatiquement", "Une fenêtre s’affiche quand une nouvelle version sort", auto) { v -> auto = v; Updater.setAutomatic(context, v) }
+        val found = Updater.available
+        if (found != null) ActionRow("Build ${found.build} disponible", "Voir les nouveautés et installer", "Installer") { Updater.open() }
+        else ActionRow("Rechercher une mise à jour", if (Updater.checking) "Recherche…" else Updater.message, "Vérifier") {
+            scope.launch { Updater.check(context, manual = true) }
+        }
+        ActionRow("Journal des versions", "Tout ce qui a changé, build par build, sur GitHub", "Ouvrir") {
+            runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
+                android.net.Uri.parse("https://github.com/yuksel3803/DuoLauncherv2/blob/pli/CHANGELOG.md")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        }
     }
 }
 

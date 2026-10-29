@@ -47,7 +47,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # The notes shown on GitHub and in the in-app update window come from release-notes.md.
+          [ -s release-notes.md ] || echo "Fold Launcher Pro compilé automatiquement depuis la branche pli." > release-notes.md
           gh release create "pli-${{ github.run_number }}" "FoldLauncherPro-${{ github.run_number }}.apk" \
             --target "${{ github.sha }}" --prerelease \
             --title "Fold Launcher Pro — build ${{ github.run_number }}" \
-            --notes "Fold Launcher Pro compilé automatiquement depuis la branche pli."
+            --notes-file release-notes.md

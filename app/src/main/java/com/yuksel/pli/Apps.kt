@@ -16,10 +16,19 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import java.text.Collator
 import java.text.Normalizer
 import java.util.Locale
+
+/**
+ * Moves an icon into graphics memory: it no longer weighs on the app's memory (about 25 MB for 150 apps)
+ * and the GPU draws it without uploading it again. Falls back to the normal bitmap if the copy fails.
+ */
+fun Bitmap.toGpu(): Bitmap = runCatching { copy(Bitmap.Config.HARDWARE, false) }.getOrNull() ?: this
 
 /** One launchable activity, for one user profile. */
 data class AppInfo(
@@ -63,14 +72,19 @@ class AppRepository(private val context: Context) {
         }
         val mainUser = android.os.Process.myUserHandle()
         val collator = Collator.getInstance(Locale.FRANCE).apply { strength = Collator.PRIMARY }
-        val result = ArrayList<AppInfo>()
+        val entries = ArrayList<Pair<LauncherActivityInfo, UserHandle>>()
         for (user in userManager.userProfiles) {
             if (user != mainUser && runCatching { userManager.isQuietModeEnabled(user) }.getOrDefault(false)) continue
             val list = runCatching { launcherApps.getActivityList(null, user) }.getOrNull() ?: continue
-            for (info in list) {
-                if (info.componentName.packageName == context.packageName) continue
-                result += toApp(info, user, user != mainUser, style.tinted)
-            }
+            for (info in list) if (info.componentName.packageName != context.packageName) entries += info to user
+        }
+        // Icons are drawn on every core at once: the first start after a reboot is several times faster.
+        val workers = Runtime.getRuntime().availableProcessors().coerceIn(2, 8)
+        val chunk = (entries.size + workers - 1) / workers
+        val result = coroutineScope {
+            entries.chunked(chunk.coerceAtLeast(1)).map { part ->
+                async(Dispatchers.Default) { part.map { (info, user) -> toApp(info, user, user != mainUser, style.tinted) } }
+            }.awaitAll().flatten()
         }
         result.sortedWith { a, b -> collator.compare(a.label, b.label) }
     }
@@ -87,7 +101,7 @@ class AppRepository(private val context: Context) {
                 // Keep the work badge visible on work apps.
                 if (work) context.packageManager.getUserBadgedIcon(android.graphics.drawable.BitmapDrawable(context.resources, base), user)
                     .toBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888) else base
-            }.getOrElse { Bitmap.createBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888) }.asImageBitmap()
+            }.getOrElse { Bitmap.createBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888) }.toGpu().asImageBitmap()
             synchronized(iconCache) { iconCache[id] = bitmap }
             bitmap
         }

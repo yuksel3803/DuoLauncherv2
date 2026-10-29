@@ -230,42 +230,53 @@ class Launcher(private val context: Context) {
 object UsageLog {
     private const val PREFS = "usage"
     private const val MAX = 400
+    /** Launches kept in memory (app id, time), oldest first; read from disk once instead of at every use. */
+    private var launches: ArrayList<Pair<String, Long>>? = null
+
+    private fun all(context: Context): ArrayList<Pair<String, Long>> = launches ?: synchronized(this) {
+        launches ?: ArrayList<Pair<String, Long>>().also { list ->
+            val array = runCatching {
+                JSONArray(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("launches", "[]"))
+            }.getOrDefault(JSONArray())
+            for (i in 0 until array.length()) array.optJSONArray(i)?.let { list += it.optString(0) to it.optLong(1) }
+            launches = list
+        }
+    }
 
     fun record(context: Context, appId: String) {
-        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val array = runCatching { JSONArray(prefs.getString("launches", "[]")) }.getOrDefault(JSONArray())
-        array.put(JSONArray().put(appId).put(System.currentTimeMillis()))
-        val trimmed = JSONArray().also { out -> for (i in maxOf(0, array.length() - MAX) until array.length()) out.put(array.get(i)) }
-        prefs.edit().putString("launches", trimmed.toString()).apply()
+        val list = all(context)
+        synchronized(this) {
+            list += appId to System.currentTimeMillis()
+            while (list.size > MAX) list.removeAt(0)
+        }
+        val json = JSONArray().also { out -> synchronized(this) { list.forEach { (id, t) -> out.put(JSONArray().put(id).put(t)) } } }
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("launches", json.toString()).apply()
     }
 
     /** The last apps opened, newest first, without duplicates. */
     fun recent(context: Context, apps: Map<String, AppInfo>, count: Int, exclude: Set<String>): List<AppInfo> {
         if (count <= 0) return emptyList()
-        val array = runCatching {
-            JSONArray(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("launches", "[]"))
-        }.getOrDefault(JSONArray())
+        val list = all(context)
         val out = LinkedHashSet<String>()
-        for (i in array.length() - 1 downTo 0) {
-            val id = array.optJSONArray(i)?.optString(0) ?: continue
-            if (id in exclude || id !in apps) continue
-            out += id
-            if (out.size >= count) break
+        synchronized(this) {
+            for (i in list.indices.reversed()) {
+                val id = list[i].first
+                if (id in exclude || id !in apps) continue
+                out += id
+                if (out.size >= count) break
+            }
         }
         return out.mapNotNull { apps[it] }
     }
 
     fun suggestions(context: Context, apps: Map<String, AppInfo>, count: Int): List<AppInfo> {
-        val array = runCatching {
-            JSONArray(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("launches", "[]"))
-        }.getOrDefault(JSONArray())
+        val list = synchronized(this) { ArrayList(all(context)) }
         val now = System.currentTimeMillis()
         val hour = LocalDateTime.now().hour
+        val zone = ZoneId.systemDefault()
         val scores = HashMap<String, Double>()
-        for (i in 0 until array.length()) {
-            val entry = array.optJSONArray(i) ?: continue
-            val id = entry.optString(0); val time = entry.optLong(1)
-            val launchHour = java.time.Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).hour
+        for ((id, time) in list) {
+            val launchHour = java.time.Instant.ofEpochMilli(time).atZone(zone).hour
             val distance = minOf(kotlin.math.abs(launchHour - hour), 24 - kotlin.math.abs(launchHour - hour))
             val timeOfDay = when (distance) { 0 -> 3.0; 1 -> 2.0; 2 -> 1.0; else -> .25 }
             val ageDays = (now - time) / 86_400_000.0

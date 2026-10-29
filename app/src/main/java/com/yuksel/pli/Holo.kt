@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,7 +31,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -69,9 +70,12 @@ fun Modifier.glass(shape: Shape, fill: Float = .06f, edge: Boolean = true): Modi
         .then(if (edge) Modifier.border(1.dp, Holo.edgeBrush, shape) else Modifier)
 
 /** A soft coloured halo behind an element. */
-fun Modifier.halo(color: Color, radius: Dp = 28.dp): Modifier = drawBehind {
+fun Modifier.halo(color: Color, radius: Dp = 28.dp): Modifier = drawWithCache {
+    // The gradient is built once per size, not on every frame.
     val r = size.minDimension / 2f + radius.toPx()
-    drawCircle(Brush.radialGradient(listOf(color, Color.Transparent), center = center, radius = r), radius = r, center = center)
+    val middle = Offset(size.width / 2f, size.height / 2f)
+    val brush = Brush.radialGradient(listOf(color, Color.Transparent), center = middle, radius = r)
+    onDrawBehind { drawCircle(brush, radius = r, center = middle) }
 }
 
 @Composable
@@ -81,12 +85,13 @@ fun IridescentText(text: String, size: TextUnit, modifier: Modifier = Modifier, 
         fontSize = size, fontWeight = weight, fontFamily = Holo.Font, letterSpacing = letterSpacing, lineHeight = size))
 }
 
-/** Sensor tilt, -1..1 on each axis, used to drift the halos (parallax). */
+/** Sensor tilt, -1..1 on each axis, used to drift the halos (parallax). The sensor only runs while the launcher is on screen. */
 @Composable
-fun rememberTilt(enabled: Boolean): Offset {
+fun rememberTilt(enabled: Boolean): State<Offset> {
     val context = LocalContext.current
+    val active = enabled && rememberOnScreen()
     var tilt by remember { mutableStateOf(Offset.Zero) }
-    DisposableEffect(enabled) {
+    DisposableEffect(active) {
         val manager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val sensor = manager.getDefaultSensor(Sensor.TYPE_GRAVITY) ?: manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         val listener = object : SensorEventListener {
@@ -97,22 +102,25 @@ fun rememberTilt(enabled: Boolean): Offset {
             }
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
         }
-        if (enabled && sensor != null) manager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_UI)
-        else tilt = Offset.Zero
+        if (active && sensor != null) manager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_UI)
+        else if (!enabled) tilt = Offset.Zero
         onDispose { manager.unregisterListener(listener) }
     }
-    val smooth by animateOffsetAsState(tilt, spring(stiffness = 40f), label = "tilt")
-    return smooth
+    return animateOffsetAsState(tilt, spring(stiffness = 40f), label = "tilt")
 }
 
-/** The black holographic backdrop with three drifting colour halos. Over the phone wallpaper it only darkens. */
+/**
+ * The black holographic backdrop with three drifting colour halos. Over the phone wallpaper it only darkens.
+ * The tilt is read while drawing, so the halos move without recomposing anything.
+ */
 @Composable
 fun HoloBackground(phoneWallpaper: Boolean, parallax: Boolean, modifier: Modifier = Modifier.fillMaxSize()) {
     val tilt = rememberTilt(parallax)
     Canvas(modifier) {
         if (phoneWallpaper) drawRect(Color.Black.copy(alpha = .38f)) else drawRect(Holo.Base)
         val w = size.width; val h = size.height
-        val shift = Offset(tilt.x * w * .08f, tilt.y * h * .05f)
+        val t = tilt.value
+        val shift = Offset(t.x * w * .08f, t.y * h * .05f)
         val strength = if (phoneWallpaper) .55f else 1f
         fun glow(center: Offset, radius: Float, color: Color, alpha: Float) =
             drawCircle(Brush.radialGradient(listOf(color.copy(alpha = alpha * strength), Color.Transparent), center, radius), radius, center)
@@ -147,7 +155,7 @@ fun iconShape(name: String): Shape = when (name) {
 fun AppIcon(app: AppInfo, size: Dp, modifier: Modifier = Modifier, showBadge: Boolean = true) {
     val bubbles = LocalBubbles.current
     val shapeName = LocalIconShape.current
-    val shape = iconShape(shapeName)
+    val shape = remember(shapeName) { iconShape(shapeName) }
     val count = if (showBadge) LocalBadges.current[app.packageName] ?: 0 else 0
     Box(modifier.size(size)) {
         if (bubbles) {

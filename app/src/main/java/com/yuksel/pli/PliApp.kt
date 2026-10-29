@@ -151,8 +151,10 @@ fun PliApp(host: PliHost, signals: HostSignals) {
     val badges by BadgeService.badges.collectAsState()
     val today = remember { TodayState() }
     var weatherTick by remember { mutableIntStateOf(0) }
-    LaunchedEffect(signals.resumes, weatherTick, launcher.loaded) {
-        if (!launcher.loaded) return@LaunchedEffect
+    val onScreen = rememberOnScreen()
+    // Battery, agenda and weather refresh every minute while the launcher is visible; nothing runs behind other apps.
+    LaunchedEffect(onScreen, weatherTick, launcher.loaded) {
+        if (!launcher.loaded || !onScreen) return@LaunchedEffect
         var force = weatherTick > 0
         while (true) {
             today.refresh(context, launcher.settings, force)
@@ -207,14 +209,6 @@ fun PliApp(host: PliHost, signals: HostSignals) {
     // Dropping an app on "Écran partagé" (inner screen) opens it next to the last app used.
     drag.onSplit = { id ->
         launcher.byId[id]?.let { app -> host.launchSplit(splitPartner(launcher, context, id), app) }
-    }
-    // Swipe up on an app icon opens its favourite shortcut.
-    drag.onIconSwipeUp = { id ->
-        launcher.byId[id]?.let { app ->
-            val shortcuts = loadAppShortcuts(context, app)
-            val chosen = launcher.layout.swipeShortcuts[id]?.let { fav -> shortcuts.firstOrNull { it.info.id == fav } } ?: shortcuts.firstOrNull()
-            if (chosen != null && !(app.id in launcher.layout.protectedApps)) startAppShortcut(context, chosen) else open(app, null)
-        }
     }
     val showMenu: (String, Rect, DragSource) -> Unit = { id, bounds, source ->
         menu = MenuRequest(id, bounds, when (source) {
@@ -399,6 +393,11 @@ fun PliApp(host: PliHost, signals: HostSignals) {
                     PillButton("Annuler", highlighted = true) { launcher.undoLast() }
                 }
             }
+            // A newer Fold Launcher Pro on GitHub: checked when the launcher comes on screen (at most every 6 h).
+            LaunchedEffect(onScreen, launcher.loaded, launcher.settings.onboarded) {
+                if (onScreen && launcher.loaded && launcher.settings.onboarded) Updater.check(context, manual = false)
+            }
+            UpdateDialog()
         }
     }
 }
@@ -445,11 +444,9 @@ private fun DefaultHomeBanner(onClick: () -> Unit, modifier: Modifier = Modifier
     }
 }
 
-/** Swipe up: on an app icon, its favourite shortcut; elsewhere, all apps. */
-private fun swipeUp(drag: DragState, actions: HomeActions) {
-    val id = drag.pressedId
-    if (id != null && !HomeLayout.isFolder(id)) drag.onIconSwipeUp(id) else actions.drawer()
-}
+/** Swipe up: all apps, wherever the finger starts (an icon touched on the way never opens). */
+@Suppress("UNUSED_PARAMETER")
+private fun swipeUp(drag: DragState, actions: HomeActions) = actions.drawer()
 
 private fun swipeDown(host: PliHost, actions: HomeActions, fraction: Float) {
     if (host.launcher.settings.swipeDownNotifications && fraction < .15f) actions.notifications() else actions.search()

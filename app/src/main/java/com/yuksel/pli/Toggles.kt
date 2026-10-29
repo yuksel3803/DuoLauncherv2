@@ -90,7 +90,9 @@ fun TogglesCard(onPermission: (String) -> Unit) {
         runCatching { cameras.registerTorchCallback(callback, null) }
         onDispose { runCatching { cameras.unregisterTorchCallback(callback) } }
     }
-    LaunchedEffect(Unit) { while (true) { delay(1500); tick++ } }
+    // Re-reads the switches every 1.5 s, only while the launcher is on screen.
+    val onScreen = rememberOnScreen()
+    LaunchedEffect(onScreen) { while (onScreen) { delay(1500); tick++ } }
     @Suppress("UNUSED_EXPRESSION") tick
     val wifi = runCatching { context.getSystemService(WifiManager::class.java).isWifiEnabled }.getOrDefault(false)
     val bluetooth = runCatching { context.getSystemService(BluetoothManager::class.java).adapter?.isEnabled == true }.getOrDefault(false)

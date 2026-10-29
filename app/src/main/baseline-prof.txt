@@ -1,0 +1,4 @@
+# Fold Launcher Pro is precompiled when installed: the home screen, the icons and the panels open
+# without warm-up stutter (Android installs this profile through androidx.profileinstaller).
+HSPLcom/yuksel/pli/**->**(**)**
+Lcom/yuksel/pli/**;
