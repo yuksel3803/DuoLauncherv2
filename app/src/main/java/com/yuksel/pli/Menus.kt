@@ -73,6 +73,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Sort
+import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -265,6 +266,8 @@ fun AppMenu(request: MenuRequest, launcher: Launcher, currentScreen: Screen, onD
                     }
                     Icon(Icons.Rounded.Storage, null, tint = Holo.Ink.copy(alpha = .85f), modifier = Modifier.size(20.dp))
                 }
+                if ((BadgeService.badges.collectAsState().value[app.packageName] ?: 0) > 0)
+                    MenuRow(Icons.Rounded.NotificationsOff, "Retirer la pastille") { BadgeService.dismiss(context, app.packageName); onDismiss() }
                 MenuRow(Icons.Rounded.Info, "Infos sur l’appli") { onInfo(app); onDismiss() }
                 if (!locked) MenuRow(Icons.Rounded.VisibilityOff, "Masquer l’appli") { launcher.hide(app); onDismiss() }
                 if (!locked && !app.work) MenuRow(Icons.Rounded.Lock, "Mettre au coffre secret") { launcher.toVault(app); onDismiss() }

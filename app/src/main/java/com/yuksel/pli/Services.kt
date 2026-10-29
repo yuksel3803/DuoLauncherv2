@@ -26,14 +26,17 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /** Counts notifications per app while notification access is granted; also unlocks the media card. */
 class BadgeService : NotificationListenerService() {
-    override fun onListenerConnected() { recount(); MediaWatcher.refresh(this) }
-    override fun onListenerDisconnected() { counts.value = emptyMap() }
+    override fun onListenerConnected() { instance = this; recount(); MediaWatcher.refresh(this) }
+    override fun onListenerDisconnected() { instance = null; counts.value = emptyMap() }
     override fun onNotificationPosted(sbn: StatusBarNotification?) = recount()
     override fun onNotificationRemoved(sbn: StatusBarNotification?) = recount()
 
     private fun recount() {
         val active = runCatching { activeNotifications }.getOrNull() ?: return
-        val shown = active.filter { it.isClearable && !it.isOngoing && it.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0 }
+        val seen = getSharedPreferences("badges", Context.MODE_PRIVATE)
+        // Notifications the user dismissed the badge of (appui long → Retirer la pastille) no longer count; newer ones do.
+        val shown = active.filter { it.isClearable && !it.isOngoing && it.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0 &&
+            it.postTime > seen.getLong(it.packageName, 0L) }
         counts.value = shown.groupingBy { it.packageName }.eachCount()
         previewMap.value = shown.groupBy { it.packageName }.mapValues { (_, list) ->
             list.sortedByDescending { it.postTime }.take(3).mapNotNull { sbn ->
@@ -49,6 +52,16 @@ class BadgeService : NotificationListenerService() {
     }
 
     companion object {
+        private var instance: BadgeService? = null
+
+        /** Hides the badge (or orbit) of [packageName] until a new notification arrives. The notifications stay in the shade. */
+        fun dismiss(context: Context, packageName: String) {
+            context.getSharedPreferences("badges", Context.MODE_PRIVATE).edit().putLong(packageName, System.currentTimeMillis()).apply()
+            counts.value = counts.value - packageName
+            previewMap.value = previewMap.value - packageName
+            instance?.let { runCatching { it.recount() } }
+        }
+
         private val counts = MutableStateFlow<Map<String, Int>>(emptyMap())
         val badges: StateFlow<Map<String, Int>> = counts.asStateFlow()
         private val previewMap = MutableStateFlow<Map<String, List<NotificationPreview>>>(emptyMap())
