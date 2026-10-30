@@ -3,6 +3,10 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 28
+
+- **Option « appli d’accueil » retirée** : plus de bandeau « Faire de Fold Launcher Pro l’appli d’accueil » en bas de l’accueil, ni de ligne dans Réglages → Paramètres. (L’accueil guidé du tout premier lancement la propose encore une fois.)
+
 ## Build 27
 
 - **Retirer une pastille à la main** : appui long sur une appli → « Retirer la pastille ». Le chiffre ou les bulles en orbite disparaissent jusqu’au prochain nouveau message ; les notifications restent dans le volet.
