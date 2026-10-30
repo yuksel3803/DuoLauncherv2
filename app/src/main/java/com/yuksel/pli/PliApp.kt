@@ -480,15 +480,6 @@ private fun FullPanel(visible: Boolean, maxWidth: androidx.compose.ui.unit.Dp = 
     }
 }
 
-@Composable
-private fun DefaultHomeBanner(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Row(modifier.glass(RoundedCornerShape(50), .08f).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Rounded.Home, null, tint = Holo.Violet)
-        Text("Faire de Fold Launcher Pro l’appli d’accueil", color = Holo.Ink, fontSize = 13.sp, modifier = Modifier.padding(start = 10.dp))
-    }
-}
-
 /** Swipe up: all apps, wherever the finger starts (an icon touched on the way never opens). */
 @Suppress("UNUSED_PARAMETER")
 private fun swipeUp(drag: DragState, actions: HomeActions) = actions.drawer()
@@ -547,7 +538,6 @@ private fun CoverHome(host: PliHost, signals: HostSignals, today: TodayState, dr
                 }
             }
         }
-        if (!signals.isDefaultHome) DefaultHomeBanner(host::requestDefaultHome, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp))
         Dock(launcher, Screen.COVER, drag, 54.dp, Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 10.dp),
             onOpenApp = { a, r -> actions.open(a, r) }, onMenu = actions.menu, onCloseMenu = actions.closeMenu, onSearch = null)
     }
@@ -596,7 +586,6 @@ private fun InnerHome(host: PliHost, signals: HostSignals, today: TodayState, dr
                 }
             }
         }
-        if (!signals.isDefaultHome) DefaultHomeBanner(host::requestDefaultHome, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp))
         val context = LocalContext.current
         val recents = remember(launcher.lastLaunch, launcher.layout.dock, launcher.layout.dockExtra, launcher.settings.recentInDock, launcher.byId) {
             UsageLog.recent(context, launcher.byId, launcher.settings.recentInDock, launcher.layout.dockOf(Screen.INNER).toSet() + launcher.concealed)

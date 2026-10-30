@@ -169,7 +169,7 @@ Les réglages sont organisés en **catégories** avec un **aperçu en direct** d
 - **Gestes** : double appui, deux doigts, glisser vers le bas.
 - **Animations** : ouverture holographique des applis ou animation Android, retours haptiques.
 - **Batterie** : économie d’énergie automatique sous 20 % (plus de halos animés ni d’effet d’ouverture).
-- **Sauvegarde**, **Pastilles de notifications**, **Launcher par défaut**.
+- **Sauvegarde**, **Pastilles de notifications**, **Mises à jour**.
 
 ---
 

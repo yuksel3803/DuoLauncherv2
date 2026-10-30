@@ -643,8 +643,6 @@ private fun SettingsOptions(
                 ActionRow("Verrouiller demande une autorisation", "Active « Fold Launcher Pro – verrouillage par geste » dans Accessibilité", "Activer", onAccessibility)
         }
         SettingsCategory.GENERAL to "Général" -> Section("Fold Launcher Pro") {
-            if (!isDefaultHome) ActionRow("Faire de Fold Launcher Pro l’appli d’accueil", "Pour le bouton Accueil, les raccourcis et les deux écrans", "Choisir", onMakeDefault)
-            else Text("Fold Launcher Pro est ton appli d’accueil.", color = Holo.Soft, fontSize = 14.sp, modifier = Modifier.padding(16.dp))
             ToggleRow("Vibrations", "Petit retour haptique sur les appuis longs et les déplacements", s.haptics) { v -> launcher.updateSettings { it.copy(haptics = v) } }
             ToggleRow("Économie de batterie", "Sous 20 % (hors charge) : halos figés et ouverture des applis simple", s.batterySaver) { v ->
                 launcher.updateSettings { it.copy(batterySaver = v) } }

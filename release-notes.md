@@ -1,2 +1,1 @@
-- Retirer une pastille ou une bulle en orbite : appui long sur l'appli → « Retirer la pastille ». Elle revient seulement au prochain nouveau message (les notifications restent dans le volet).
-- Créer un dossier est beaucoup plus facile : lâche une appli n'importe où sur l'icône d'une autre, une petite vibration le confirme.
+- L'option « Faire de Fold Launcher Pro l'appli d'accueil » est retirée de l'accueil et des réglages.
