@@ -3,6 +3,11 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 29
+
+- **Dock dans les applis** (Réglages → Accueil → Dock) : une fine poignée irisée au bord droit de l’écran, visible seulement dans les applis. Touche-la : le dock s’ouvre par-dessus l’appli. Touche une appli pour l’ouvrir, maintiens-la pour l’ouvrir à côté en écran partagé. La poignée se déplace verticalement en la faisant glisser. Demande l’autorisation « Afficher par-dessus les autres applis ».
+- **Widgets qui défilent** : les listes des widgets Android (Google Tasks, Gmail, Agenda…) défilent dans la page Aujourd’hui ; la colonne ne leur vole plus le geste.
+
 ## Build 28
 
 - **Option « appli d’accueil » retirée** : plus de bandeau « Faire de Fold Launcher Pro l’appli d’accueil » en bas de l’accueil, ni de ligne dans Réglages → Paramètres. (L’accueil guidé du tout premier lancement la propose encore une fois.)
