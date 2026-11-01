@@ -3,6 +3,10 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 32
+
+- Le texte « Appui long : à côté » est retiré du dock dans les applis (l’appui long ouvre toujours l’appli à côté).
+
 ## Build 31
 
 - **Écran partagé, nouvelle méthode** : la commande d’écran partagé d’Android utilisée par la build 30 n’est plus prise en charge par les versions récentes d’Android. Maintenant, une courte fenêtre de Fold Launcher Pro ouvre l’appli choisie « à côté » (ce qu’Android accepte depuis une vraie fenêtre), puis rouvre l’appli en cours dans sa moitié et se ferme. Utilisée par le dock dans les applis (appui long) et par la zone « Écran partagé » de l’accueil.
