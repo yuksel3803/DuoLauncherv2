@@ -184,21 +184,8 @@ class MainActivity : ComponentActivity(), PliHost {
     }
 
     override fun launchSplit(first: AppInfo?, second: AppInfo) {
-        if (first != null) launch(first, null)
-        // Reliable path: once the first app is up, Android's own split action docks it, then the second opens beside it.
-        if (first != null && PliAccessibility.enabled(this)) {
-            window.decorView.postDelayed({
-                if (PliAccessibility.splitScreen()) window.decorView.postDelayed({
-                    val ok = runCatching {
-                        if (second.user == android.os.Process.myUserHandle()) startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-                            .setComponent(second.component).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT or Intent.FLAG_ACTIVITY_MULTIPLE_TASK))
-                        else launch(second, null)
-                    }.isSuccess
-                    if (!ok) toast("${second.label} ne peut pas s’ouvrir en écran partagé")
-                }, 750)
-            }, 700)
-            return
-        }
+        // The home screen can't share the screen, so a small invisible window does it: the second app beside it, then the first in its place.
+        if (first != null) { SplitActivity.start(this, first.packageName, second.component, second.user); return }
         window.decorView.postDelayed({
             val ok = runCatching {
                 if (second.user == android.os.Process.myUserHandle()) {

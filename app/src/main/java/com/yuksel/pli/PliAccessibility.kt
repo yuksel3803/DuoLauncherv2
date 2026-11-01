@@ -13,11 +13,19 @@ import android.view.accessibility.AccessibilityEvent
 class PliAccessibility : AccessibilityService() {
     override fun onServiceConnected() { instance = this }
     override fun onUnbind(intent: android.content.Intent?): Boolean { instance = null; return super.onUnbind(intent) }
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        // Remembers the app in front (only its package name), so the dock knows which app to keep in split screen.
+        if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        val pkg = event.packageName?.toString() ?: return
+        if (pkg == packageName || pkg == "com.android.systemui" || pkg.startsWith("com.sec.android.app.launcher") || pkg == "android") return
+        if (packageManager.getLaunchIntentForPackage(pkg) != null) frontPackage = pkg
+    }
     override fun onInterrupt() {}
 
     companion object {
         @Volatile private var instance: PliAccessibility? = null
+        /** The last app shown in front (package name), or null. */
+        @Volatile var frontPackage: String? = null
 
         fun lock(): Boolean = instance?.performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN) == true
 

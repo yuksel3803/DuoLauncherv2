@@ -165,22 +165,16 @@ class FloatingDock : Service() {
             if (!ok) Toast.makeText(this, "Impossible d’ouvrir cette appli", Toast.LENGTH_SHORT).show()
             return
         }
-        // Split screen: Android only splits from its own action, so the app on screen is docked first (accessibility),
-        // then the chosen app opens in the other half.
-        if (!PliAccessibility.enabled(this) || !PliAccessibility.splitScreen()) {
-            Toast.makeText(this, "Pour l’écran partagé, active « Fold Launcher Pro – gestes et écran partagé » dans Accessibilité",
+        // Split screen: the app in front is known through the accessibility service (package name only).
+        val front = PliAccessibility.frontPackage
+        if (!PliAccessibility.enabled(this) || front == null) {
+            Toast.makeText(this, "Pour l’écran partagé, active « Fold Launcher Pro – gestes et écran partagé » dans Accessibilité, puis rouvre ton appli",
                 Toast.LENGTH_LONG).show()
             runCatching { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             return
         }
-        android.os.Handler(mainLooper).postDelayed({
-            val ok = runCatching {
-                if (user == Process.myUserHandle()) startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setComponent(component)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT or Intent.FLAG_ACTIVITY_MULTIPLE_TASK))
-                else getSystemService(LauncherApps::class.java).startMainActivity(component, user, null, null)
-            }.isSuccess
-            if (!ok) Toast.makeText(this, "Cette appli ne s’ouvre pas en écran partagé", Toast.LENGTH_SHORT).show()
-        }, 750)
+        if (front == component.packageName) { Toast.makeText(this, "Cette appli est déjà ouverte", Toast.LENGTH_SHORT).show(); return }
+        SplitActivity.start(this, front, component, user)
     }
 
     private fun refreshVisibility() {

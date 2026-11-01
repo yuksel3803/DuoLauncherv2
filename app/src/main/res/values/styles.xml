@@ -9,4 +9,11 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLayoutInDisplayCutoutMode">always</item>
     </style>
+    <!-- Opaque window for the split-screen stepping stone. -->
+    <style name="Theme.Pli.Split" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowShowWallpaper">false</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
 </resources>
