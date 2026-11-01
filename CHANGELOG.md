@@ -3,6 +3,10 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 33
+
+- **Poignée du dock à gauche ou à droite** : Réglages → Accueil → Dock → « Côté de la poignée ». Le dock s’ouvre du même côté.
+
 ## Build 32
 
 - Le texte « Appui long : à côté » est retiré du dock dans les applis (l’appui long ouvre toujours l’appli à côté).

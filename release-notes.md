@@ -1,1 +1,1 @@
-- Le texte « Appui long : à côté » est retiré du dock dans les applis.
+- Dock dans les applis : choisis le côté de la poignée, gauche ou droite (Réglages → Accueil → Dock → Côté de la poignée).

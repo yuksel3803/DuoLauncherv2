@@ -551,10 +551,20 @@ private fun SettingsOptions(
             ChoiceRow("Écran interne", "Jusqu’à 10 ; celles en plus n’apparaissent que dépliées", (s.dockSize..10).toList(), s.innerDockSize.coerceAtLeast(s.dockSize)) { v ->
                 launcher.updateSettings { it.copy(innerDockSize = v) } }
             ChoiceRow("Applis récentes au bout du dock (interne)", null, listOf(0, 1, 2, 3), s.recentInDock) { v -> launcher.updateSettings { it.copy(recentInDock = v) } }
-            ToggleRow("Dock dans les applis", "Une fine poignée au bord droit de l’écran ouvre le dock par-dessus l’appli : touche une appli pour l’ouvrir, maintiens-la pour l’ouvrir à côté (écran partagé, avec le service d’accessibilité « Fold Launcher Pro – gestes et écran partagé »). Demande l’autorisation « Afficher par-dessus les autres applis ».",
+            ToggleRow("Dock dans les applis", "Une fine poignée au bord de l’écran ouvre le dock par-dessus l’appli : touche une appli pour l’ouvrir, maintiens-la pour l’ouvrir à côté (écran partagé, avec le service d’accessibilité « Fold Launcher Pro – gestes et écran partagé »). Demande l’autorisation « Afficher par-dessus les autres applis ».",
                 s.floatingDock) { v ->
                 launcher.updateSettings { it.copy(floatingDock = v) }
                 if (v && !FloatingDock.canShow(context)) FloatingDock.requestPermission(context) else FloatingDock.sync(context, v)
+            }
+            if (s.floatingDock) Row(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Côté de la poignée", color = Holo.Soft, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                listOf("left" to "Gauche", "right" to "Droite").forEach { (key, name) ->
+                    PillButton(name, highlighted = s.floatingDockSide == key) {
+                        launcher.updateSettings { it.copy(floatingDockSide = key) }
+                        FloatingDock.restart(context)
+                    }
+                }
             }
             ToggleRow("Dock qui se cache (interne)", "Il glisse vers le bas pendant que tu changes de page et revient dès que tu t’arrêtes", s.autoHideDock) { v ->
                 launcher.updateSettings { it.copy(autoHideDock = v) } }

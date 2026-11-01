@@ -34,6 +34,8 @@ class FloatingDock : Service() {
     private var handle: View? = null
     private var panel: View? = null
     private val dp get() = resources.displayMetrics.density
+    /** Gravity of the chosen edge (right by default). */
+    private val edge get() = if (Store(this).loadSettings().floatingDockSide == "left") Gravity.START else Gravity.END
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -70,13 +72,14 @@ class FloatingDock : Service() {
             contentDescription = "Dock Fold Launcher Pro"
         }
         val params = overlayParams((7 * dp).toInt(), (88 * dp).toInt()).apply {
-            gravity = Gravity.END or Gravity.TOP
+            gravity = edge or Gravity.TOP
             y = prefs().getInt("y", (resources.displayMetrics.heightPixels * .38f).toInt())
         }
         // The touch area is wider than the visible pill: easier to catch at the edge.
         val touch = LinearLayout(this).apply {
-            gravity = Gravity.END or Gravity.CENTER_VERTICAL
-            setPadding((14 * dp).toInt(), 0, (3 * dp).toInt(), 0)
+            val left = edge == Gravity.START
+            gravity = edge or Gravity.CENTER_VERTICAL
+            setPadding(((if (left) 3 else 14) * dp).toInt(), 0, ((if (left) 14 else 3) * dp).toInt(), 0)
             addView(view, LinearLayout.LayoutParams((7 * dp).toInt(), (88 * dp).toInt()))
         }
         params.width = (24 * dp).toInt()
@@ -144,7 +147,7 @@ class FloatingDock : Service() {
         }
         val params = overlayParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH).apply {
-            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            gravity = edge or Gravity.CENTER_VERTICAL
             x = (12 * dp).toInt()
         }
         val max = (resources.displayMetrics.heightPixels * .8f).toInt()
@@ -191,6 +194,13 @@ class FloatingDock : Service() {
             val intent = Intent(context, FloatingDock::class.java)
             if (enabled && canShow(context)) runCatching { context.startService(intent) }
             else if (instance != null) runCatching { context.stopService(intent) }
+        }
+
+        /** Re-creates the handle (after the edge changed). */
+        fun restart(context: Context) {
+            val intent = Intent(context, FloatingDock::class.java)
+            if (instance != null) runCatching { context.stopService(intent) }
+            if (canShow(context)) runCatching { context.startService(intent) }
         }
 
         fun requestPermission(context: Context) {

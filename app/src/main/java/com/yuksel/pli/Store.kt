@@ -63,6 +63,8 @@ data class PliSettings(
     val autoHideDock: Boolean = false,
     /** A handle on the screen edge inside apps that brings the dock out (and opens apps side by side). */
     val floatingDock: Boolean = false,
+    /** Edge of the screen for that handle: "right" or "left". */
+    val floatingDockSide: String = "right",
 )
 
 /** Saves the layout, the settings and the quick note in private preferences. */
@@ -121,6 +123,7 @@ class Store(context: Context) {
         liveWeather = prefs.getBoolean("liveWeather", true),
         autoHideDock = prefs.getBoolean("autoHideDock", false),
         floatingDock = prefs.getBoolean("floatingDock", false),
+        floatingDockSide = prefs.getString("floatingDockSide", "right") ?: "right",
     )
 
     fun saveSettings(s: PliSettings) {
@@ -142,7 +145,7 @@ class Store(context: Context) {
             .putBoolean("livingHalos", s.livingHalos).putString("pageTransition", s.pageTransition)
             .putBoolean("tabletop", s.tabletop).putBoolean("orbitBadges", s.orbitBadges)
             .putString("clockStyle", s.clockStyle).putBoolean("liveWeather", s.liveWeather).putBoolean("autoHideDock", s.autoHideDock)
-            .putBoolean("floatingDock", s.floatingDock).apply()
+            .putBoolean("floatingDock", s.floatingDock).putString("floatingDockSide", s.floatingDockSide).apply()
     }
 
     /** Everything Pli saved (layout, settings, note) as one JSON document. Android widgets are left out: they belong to this phone. */
