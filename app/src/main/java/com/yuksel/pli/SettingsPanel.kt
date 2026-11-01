@@ -551,7 +551,7 @@ private fun SettingsOptions(
             ChoiceRow("Écran interne", "Jusqu’à 10 ; celles en plus n’apparaissent que dépliées", (s.dockSize..10).toList(), s.innerDockSize.coerceAtLeast(s.dockSize)) { v ->
                 launcher.updateSettings { it.copy(innerDockSize = v) } }
             ChoiceRow("Applis récentes au bout du dock (interne)", null, listOf(0, 1, 2, 3), s.recentInDock) { v -> launcher.updateSettings { it.copy(recentInDock = v) } }
-            ToggleRow("Dock dans les applis", "Une fine poignée au bord droit de l’écran ouvre le dock par-dessus l’appli : touche une appli pour l’ouvrir, maintiens-la pour l’ouvrir à côté (écran partagé). Demande l’autorisation « Afficher par-dessus les autres applis ».",
+            ToggleRow("Dock dans les applis", "Une fine poignée au bord droit de l’écran ouvre le dock par-dessus l’appli : touche une appli pour l’ouvrir, maintiens-la pour l’ouvrir à côté (écran partagé, avec le service d’accessibilité « Fold Launcher Pro – gestes et écran partagé »). Demande l’autorisation « Afficher par-dessus les autres applis ».",
                 s.floatingDock) { v ->
                 launcher.updateSettings { it.copy(floatingDock = v) }
                 if (v && !FloatingDock.canShow(context)) FloatingDock.requestPermission(context) else FloatingDock.sync(context, v)
@@ -645,7 +645,7 @@ private fun SettingsOptions(
             GestureRow("Glisser à deux doigts vers le haut", s.twoFingerUp, launcher, onPick = { onPick("twoFingerUp") }) { v -> launcher.updateSettings { it.copy(twoFingerUp = v) } }
             GestureRow("Glisser à deux doigts vers le bas", s.twoFingerDown, launcher, onPick = { onPick("twoFingerDown") }) { v -> launcher.updateSettings { it.copy(twoFingerDown = v) } }
             if (listOf(s.doubleTap, s.twoFingerUp, s.twoFingerDown).contains("lock") && !accessibilityOn)
-                ActionRow("Verrouiller demande une autorisation", "Active « Fold Launcher Pro – verrouillage par geste » dans Accessibilité", "Activer", onAccessibility)
+                ActionRow("Verrouiller demande une autorisation", "Active « Fold Launcher Pro – gestes et écran partagé » dans Accessibilité", "Activer", onAccessibility)
         }
         SettingsCategory.GENERAL to "Général" -> Section("Fold Launcher Pro") {
             ToggleRow("Vibrations", "Petit retour haptique sur les appuis longs et les déplacements", s.haptics) { v -> launcher.updateSettings { it.copy(haptics = v) } }

@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Fold Launcher Pro</string>
-    <string name="accessibility_label">Fold Launcher Pro – verrouillage par geste</string>
-    <string name="accessibility_description">Permet à Fold Launcher Pro de verrouiller l’écran quand tu fais le geste choisi (par exemple un double appui sur l’accueil). Fold Launcher Pro ne lit pas le contenu de l’écran.</string>
+    <string name="accessibility_label">Fold Launcher Pro – gestes et écran partagé</string>
+    <string name="accessibility_description">Permet à Fold Launcher Pro de verrouiller l’écran quand tu fais le geste choisi (par exemple un double appui sur l’accueil). Il permet aussi au dock dans les applis d’ouvrir une appli à côté de celle en cours (écran partagé). Fold Launcher Pro ne lit pas le contenu de l’écran.</string>
     <string name="wallpaper_description">Les halos holographiques de Fold Launcher Pro, dans ta palette.</string>
 </resources>

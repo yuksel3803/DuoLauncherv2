@@ -160,13 +160,27 @@ class FloatingDock : Service() {
     private fun removePanel() { panel?.let { runCatching { windows.removeView(it) } }; panel = null }
 
     private fun open(component: ComponentName, user: android.os.UserHandle, adjacent: Boolean) {
-        val ok = runCatching {
-            if (adjacent && user == Process.myUserHandle()) {
-                startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setComponent(component)
+        if (!adjacent) {
+            val ok = runCatching { getSystemService(LauncherApps::class.java).startMainActivity(component, user, null, null) }.isSuccess
+            if (!ok) Toast.makeText(this, "Impossible d’ouvrir cette appli", Toast.LENGTH_SHORT).show()
+            return
+        }
+        // Split screen: Android only splits from its own action, so the app on screen is docked first (accessibility),
+        // then the chosen app opens in the other half.
+        if (!PliAccessibility.enabled(this) || !PliAccessibility.splitScreen()) {
+            Toast.makeText(this, "Pour l’écran partagé, active « Fold Launcher Pro – gestes et écran partagé » dans Accessibilité",
+                Toast.LENGTH_LONG).show()
+            runCatching { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            return
+        }
+        android.os.Handler(mainLooper).postDelayed({
+            val ok = runCatching {
+                if (user == Process.myUserHandle()) startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setComponent(component)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT or Intent.FLAG_ACTIVITY_MULTIPLE_TASK))
-            } else getSystemService(LauncherApps::class.java).startMainActivity(component, user, null, null)
-        }.isSuccess
-        if (!ok) Toast.makeText(this, "Impossible d’ouvrir cette appli", Toast.LENGTH_SHORT).show()
+                else getSystemService(LauncherApps::class.java).startMainActivity(component, user, null, null)
+            }.isSuccess
+            if (!ok) Toast.makeText(this, "Cette appli ne s’ouvre pas en écran partagé", Toast.LENGTH_SHORT).show()
+        }, 750)
     }
 
     private fun refreshVisibility() {

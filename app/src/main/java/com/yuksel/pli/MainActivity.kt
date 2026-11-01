@@ -171,7 +171,7 @@ class MainActivity : ComponentActivity(), PliHost {
     private fun toast(text: String) = android.widget.Toast.makeText(this, text, android.widget.Toast.LENGTH_SHORT).show()
 
     override fun openAccessibilitySettings() {
-        toast("Active « Fold Launcher Pro – verrouillage par geste »")
+        toast("Active « Fold Launcher Pro – gestes et écran partagé »")
         runCatching { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
     }
 
@@ -185,6 +185,20 @@ class MainActivity : ComponentActivity(), PliHost {
 
     override fun launchSplit(first: AppInfo?, second: AppInfo) {
         if (first != null) launch(first, null)
+        // Reliable path: once the first app is up, Android's own split action docks it, then the second opens beside it.
+        if (first != null && PliAccessibility.enabled(this)) {
+            window.decorView.postDelayed({
+                if (PliAccessibility.splitScreen()) window.decorView.postDelayed({
+                    val ok = runCatching {
+                        if (second.user == android.os.Process.myUserHandle()) startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+                            .setComponent(second.component).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT or Intent.FLAG_ACTIVITY_MULTIPLE_TASK))
+                        else launch(second, null)
+                    }.isSuccess
+                    if (!ok) toast("${second.label} ne peut pas s’ouvrir en écran partagé")
+                }, 750)
+            }, 700)
+            return
+        }
         window.decorView.postDelayed({
             val ok = runCatching {
                 if (second.user == android.os.Process.myUserHandle()) {

@@ -3,6 +3,11 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 30
+
+- **Écran partagé qui marche depuis le dock dans les applis** : Android refusait d’ouvrir une appli « à côté » depuis la poignée (elle s’ouvrait en plein écran). Maintenant, l’appli en cours est d’abord mise en écran partagé par l’action d’Android, puis l’appli choisie s’ouvre dans l’autre moitié.
+- Demande le service d’accessibilité, renommé « Fold Launcher Pro – gestes et écran partagé » (il ne lit pas l’écran). La zone « Écran partagé » de l’accueil utilise la même méthode quand il est activé.
+
 ## Build 29
 
 - **Dock dans les applis** (Réglages → Accueil → Dock) : une fine poignée irisée au bord droit de l’écran, visible seulement dans les applis. Touche-la : le dock s’ouvre par-dessus l’appli. Touche une appli pour l’ouvrir, maintiens-la pour l’ouvrir à côté en écran partagé. La poignée se déplace verticalement en la faisant glisser. Demande l’autorisation « Afficher par-dessus les autres applis ».

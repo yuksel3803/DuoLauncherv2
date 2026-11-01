@@ -1,2 +1,3 @@
-- Dock dans les applis : une fine poignée au bord droit de l'écran ouvre ton dock par-dessus n'importe quelle appli. Touche une appli pour l'ouvrir, maintiens-la pour l'ouvrir à côté (écran partagé). À activer dans Réglages → Accueil → Dock.
-- Les widgets qui ont une liste (Google Tasks, Gmail, Agenda…) défilent maintenant dans la page Aujourd'hui.
+- Écran partagé depuis le dock dans les applis : maintiens une appli du dock, elle s'ouvre à côté de celle en cours.
+- Il faut activer une fois « Fold Launcher Pro – gestes et écran partagé » dans Paramètres → Accessibilité (le launcher t'y emmène).
+- La zone « Écran partagé » de l'accueil utilise la même méthode, plus fiable.
