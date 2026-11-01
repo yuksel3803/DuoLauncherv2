@@ -132,10 +132,6 @@ class FloatingDock : Service() {
         if (column.childCount == 0) column.addView(TextView(this).apply {
             text = "Dock vide"; setTextColor(0xFFB9B4D6.toInt()); textSize = 12f
         })
-        column.addView(TextView(this).apply {
-            text = "Appui long :\nà côté"; setTextColor(0xFFB9B4D6.toInt()); textSize = 10f; gravity = Gravity.CENTER
-            setPadding(0, (6 * dp).toInt(), 0, 0)
-        })
         val scroll = ScrollView(this).apply {
             isVerticalScrollBarEnabled = false
             val pad = (8 * dp).toInt(); setPadding(pad, pad, pad, pad)

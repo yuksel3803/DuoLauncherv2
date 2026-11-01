@@ -1,3 +1,1 @@
-- Nouvelle méthode pour l'écran partagé depuis le dock dans les applis : maintiens une appli du dock, une courte fenêtre sombre ouvre l'appli choisie à côté puis remet ton appli de l'autre côté.
-- Nécessite toujours le service d'accessibilité « Fold Launcher Pro – gestes et écran partagé » (il sert à savoir quelle appli est ouverte).
-- La zone « Écran partagé » de l'accueil utilise la même méthode.
+- Le texte « Appui long : à côté » est retiré du dock dans les applis.
