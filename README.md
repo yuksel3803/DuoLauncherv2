@@ -77,6 +77,7 @@ Un Fold, c’est deux téléphones en un : un écran externe étroit qu’on uti
 - **Grille indépendante** de celle de l’écran externe, avec ses propres colonnes, lignes et pages.
 - **Dock étendu jusqu’à 10 applis**, plus les **applis récentes** affichées automatiquement au bout du dock.
 - **Écran partagé** : glisser une appli sur la zone « Écran partagé » l’ouvre à côté de l’appli en cours.
+- **Dock dans les applis** : une poignée au bord de l’écran ouvre le dock par-dessus n’importe quelle appli ; appui long pour ouvrir une appli à côté.
 
 ---
 

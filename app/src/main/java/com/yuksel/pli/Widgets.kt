@@ -15,7 +15,7 @@ import android.view.ViewGroup
 /** Hosts the Android widgets of the "Aujourd'hui" column and runs the add (bind + configure) flow. */
 class Widgets(private val activity: Activity) {
     val manager: AppWidgetManager = AppWidgetManager.getInstance(activity)
-    private val host = AppWidgetHost(activity, HOST_ID)
+    private val host = ScrollHost(activity, HOST_ID)
     private val views = HashMap<Int, AppWidgetHostView>()
     private var pending: Pair<Int, AppWidgetProviderInfo>? = null
     private var onAdded: ((Int, AppWidgetProviderInfo) -> Unit)? = null
@@ -100,5 +100,35 @@ class Widgets(private val activity: Activity) {
         const val HOST_ID = 0x504C49
         const val REQUEST_BIND = 4101
         const val REQUEST_CONFIGURE = 4102
+    }
+}
+
+/** Creates [ScrollableWidgetView]s instead of plain host views. */
+private class ScrollHost(context: Context, id: Int) : AppWidgetHost(context, id) {
+    override fun onCreateView(context: Context, appWidgetId: Int, appWidget: AppWidgetProviderInfo?): AppWidgetHostView = ScrollableWidgetView(context)
+}
+
+/**
+ * A widget that keeps its own scrolling (Google Tasks, Gmail, Agenda lists…): when a touch starts on a list that can
+ * scroll, the "Aujourd'hui" column stops taking the gesture, so the list inside the widget scrolls instead.
+ */
+class ScrollableWidgetView(context: Context) : AppWidgetHostView(context) {
+    override fun onInterceptTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN && scrollableAt(this, ev.x, ev.y))
+            parent?.requestDisallowInterceptTouchEvent(true)
+        return super.onInterceptTouchEvent(ev)
+    }
+
+    private fun scrollableAt(view: android.view.View, x: Float, y: Float): Boolean {
+        if (view !== this && (view.canScrollVertically(1) || view.canScrollVertically(-1) || view is android.widget.AdapterView<*>)) return true
+        if (view !is ViewGroup) return false
+        for (i in view.childCount - 1 downTo 0) {
+            val child = view.getChildAt(i)
+            if (child.visibility != android.view.View.VISIBLE) continue
+            val cx = x - child.left + view.scrollX
+            val cy = y - child.top + view.scrollY
+            if (cx >= 0 && cy >= 0 && cx < child.width && cy < child.height && scrollableAt(child, cx, cy)) return true
+        }
+        return false
     }
 }

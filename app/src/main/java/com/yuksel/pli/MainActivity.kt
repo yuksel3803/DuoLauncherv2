@@ -81,6 +81,14 @@ class MainActivity : ComponentActivity(), PliHost {
         super.onResume()
         refreshDefaultHome()
         signals.resumes++
+        // The dock handle inside apps hides while the home screen is shown, and starts or stops with its setting.
+        FloatingDock.homeVisible = true
+        FloatingDock.sync(this, launcher.store.loadSettings().floatingDock)
+    }
+
+    override fun onPause() {
+        FloatingDock.homeVisible = false
+        super.onPause()
     }
 
     override fun onDestroy() {

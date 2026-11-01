@@ -177,7 +177,7 @@ private val SETTINGS_INDEX: Map<String, String> = mapOf(
     "Forme" to "forme des icones rond carre squircle goutte feuille cadre de verre bulles",
     "Animations" to "ouverture des applis animation holographique systeme changement de page cube profondeur fondu carrousel effet",
     "Grille" to "grille colonnes lignes ecran externe interne taille",
-    "Dock" to "dock taille applis recentes cacher masquer automatique",
+    "Dock" to "dock taille applis recentes cacher masquer automatique flottant multitache ecran partage dans les applis poignee",
     "Horloge" to "horloge recherche google finder bouton style analogique aiguilles lettres grasse",
     "Pages" to "pages verrouiller disposition actus nouvelles applis",
     "Suggestions" to "suggestions contexte voiture casque pastille nouveau nouvelles applis",
@@ -551,6 +551,11 @@ private fun SettingsOptions(
             ChoiceRow("Écran interne", "Jusqu’à 10 ; celles en plus n’apparaissent que dépliées", (s.dockSize..10).toList(), s.innerDockSize.coerceAtLeast(s.dockSize)) { v ->
                 launcher.updateSettings { it.copy(innerDockSize = v) } }
             ChoiceRow("Applis récentes au bout du dock (interne)", null, listOf(0, 1, 2, 3), s.recentInDock) { v -> launcher.updateSettings { it.copy(recentInDock = v) } }
+            ToggleRow("Dock dans les applis", "Une fine poignée au bord droit de l’écran ouvre le dock par-dessus l’appli : touche une appli pour l’ouvrir, maintiens-la pour l’ouvrir à côté (écran partagé). Demande l’autorisation « Afficher par-dessus les autres applis ».",
+                s.floatingDock) { v ->
+                launcher.updateSettings { it.copy(floatingDock = v) }
+                if (v && !FloatingDock.canShow(context)) FloatingDock.requestPermission(context) else FloatingDock.sync(context, v)
+            }
             ToggleRow("Dock qui se cache (interne)", "Il glisse vers le bas pendant que tu changes de page et revient dès que tu t’arrêtes", s.autoHideDock) { v ->
                 launcher.updateSettings { it.copy(autoHideDock = v) } }
         }

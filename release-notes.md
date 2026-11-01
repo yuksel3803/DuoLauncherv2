@@ -1,1 +1,2 @@
-- L'option « Faire de Fold Launcher Pro l'appli d'accueil » est retirée de l'accueil et des réglages.
+- Dock dans les applis : une fine poignée au bord droit de l'écran ouvre ton dock par-dessus n'importe quelle appli. Touche une appli pour l'ouvrir, maintiens-la pour l'ouvrir à côté (écran partagé). À activer dans Réglages → Accueil → Dock.
+- Les widgets qui ont une liste (Google Tasks, Gmail, Agenda…) défilent maintenant dans la page Aujourd'hui.
