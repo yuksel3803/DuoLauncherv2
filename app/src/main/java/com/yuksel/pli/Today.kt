@@ -134,13 +134,17 @@ fun TodayColumn(
     val nowPlaying by MediaWatcher.nowPlaying.collectAsState()
     // The keyboard shrinks the column (not the home grid), so the card being typed in stays above it.
     // Soft top and bottom edges instead of a hard cut above the dock.
-    Column(modifier.keyboardOverlapPadding().fadeEdges().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        if (showTitle) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    // The title and "Modifier" stay fixed and sharp; only the cards scroll (and fade) below them.
+    Column(modifier) {
+        if (showTitle) Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             IridescentText("Aujourd’hui", 32.sp, Modifier.weight(1f), letterSpacing = (-.5).sp)
             PillButton(if (editing) "Terminé" else "Modifier", highlighted = editing) { onEditing(!editing) }
-        } else if (editing) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        } else if (editing) Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.End) {
             PillButton("Terminé", highlighted = true) { onEditing(false) }
         }
+    Column(Modifier.weight(1f).fillMaxWidth().keyboardOverlapPadding().fadeEdges().verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Spacer(Modifier.height(4.dp))
         val card: @Composable (TodayItem) -> Unit = { item ->
             when (item.kind) {
                 TodayItem.WEATHER -> WeatherCard(today.weather, onSettings, onPermission)
@@ -207,6 +211,7 @@ fun TodayColumn(
         // Room to scroll the last card fully above the faded edge.
         Spacer(Modifier.height(40.dp))
         Spacer(Modifier.height(8.dp))
+    }
     }
 }
 

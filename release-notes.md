@@ -1,4 +1,1 @@
-- Plus de bloc noir quand tu écris dans la note : la page Aujourd'hui remonte juste au-dessus du clavier.
-- Déplacer une icône vers une autre page est plus facile : bande de bord plus large, page qui tourne plus vite, bords lumineux et petite vibration.
-- Le dock de l'écran externe n'est plus un rectangle de toute la largeur : il épouse ses icônes.
-- Nouveau (au choix) : la page Aujourd'hui aussi sur l'écran externe, à gauche de l'accueil (Réglages → Accueil → Pages).
+- Page Aujourd'hui : le titre et le bouton « Modifier / Terminé » restent fixes en haut et ne sont plus rognés ; seules les cartes défilent dessous.
