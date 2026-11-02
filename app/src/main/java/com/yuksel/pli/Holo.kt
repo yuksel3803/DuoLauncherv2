@@ -32,6 +32,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -239,3 +241,14 @@ fun BadgeDot(count: Int, modifier: Modifier = Modifier) {
         Text(if (count > 99) "99+" else count.toString(), color = Color(0xFF1A0512), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
     }
 }
+
+/** Fades the content out over [top] at the top and [bottom] at the bottom (for scrolling columns). */
+fun Modifier.fadeEdges(top: Dp = 12.dp, bottom: Dp = 44.dp): Modifier =
+    graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+        .drawWithContent {
+            drawContent()
+            val h = size.height.coerceAtLeast(1f)
+            val t = (top.toPx() / h).coerceIn(0f, .4f); val b = (bottom.toPx() / h).coerceIn(0f, .4f)
+            drawRect(Brush.verticalGradient(0f to Color.Transparent, t to Color.Black, 1f - b to Color.Black, 1f to Color.Transparent),
+                blendMode = androidx.compose.ui.graphics.BlendMode.DstIn)
+        }

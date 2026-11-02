@@ -1,1 +1,2 @@
-- Note rapide et Rappels : quand tu écris, la carte remonte au-dessus du clavier, tu vois ce que tu tapes.
+- La page Aujourd'hui ne s'arrête plus d'un coup au-dessus du dock : elle s'estompe en douceur, et la dernière carte peut remonter entièrement.
+- La pastille des applis récentes du dock (par exemple le « 8 » de Discord) n'est plus coupée.

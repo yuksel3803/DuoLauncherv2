@@ -133,7 +133,8 @@ fun TodayColumn(
     val items = launcher.layout.today
     val nowPlaying by MediaWatcher.nowPlaying.collectAsState()
     // The keyboard shrinks the column (not the home grid), so the card being typed in stays above it.
-    Column(modifier.imePadding().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    // Soft top and bottom edges instead of a hard cut above the dock.
+    Column(modifier.imePadding().fadeEdges().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if (showTitle) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IridescentText("Aujourd’hui", 32.sp, Modifier.weight(1f), letterSpacing = (-.5).sp)
             PillButton(if (editing) "Terminé" else "Modifier", highlighted = editing) { onEditing(!editing) }
@@ -203,6 +204,8 @@ fun TodayColumn(
             Icon(Icons.Rounded.Add, null, tint = Holo.Violet)
             Text("Ajouter un widget", color = Holo.Ink, fontSize = 14.sp, modifier = Modifier.padding(start = 8.dp))
         }
+        // Room to scroll the last card fully above the faded edge.
+        Spacer(Modifier.height(40.dp))
         Spacer(Modifier.height(8.dp))
     }
 }

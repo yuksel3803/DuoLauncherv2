@@ -572,8 +572,10 @@ fun Dock(
                     var bounds by remember { mutableStateOf(Rect.Zero) }
                     Box(Modifier.size(icon).onGloballyPositioned { bounds = it.boundsInRoot() }
                         .semantics { contentDescription = "Récente : ${app.label}" }
-                        .clickable(remember { MutableInteractionSource() }, null, role = Role.Button) { onOpenApp(app, bounds) }
-                        .alpha(.85f)) { AppIcon(app, icon) }
+                        .clickable(remember { MutableInteractionSource() }, null, role = Role.Button) { onOpenApp(app, bounds) }) {
+                        // Full opacity: a see-through layer would cut the badge that sticks out of the icon.
+                        AppIcon(app, icon)
+                    }
                 }
             }
             if (onSearch != null) SearchOrb(icon, onSearch)
