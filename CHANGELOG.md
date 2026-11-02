@@ -3,6 +3,13 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 36
+
+- **Bloc noir sous la note corrigé** : la page Aujourd’hui était réduite de toute la hauteur du clavier, alors que le dock en cache déjà une partie ; elle est maintenant réduite seulement de ce que le clavier recouvre vraiment.
+- **Changer de page en déplaçant une icône** : bande de bord deux fois plus large (56 dp), première page tournée après 0,4 s au lieu de 0,6 s, bords lumineux pendant le déplacement et petite vibration à chaque page.
+- **Dock de l’écran externe** : son cadre épouse ses icônes au lieu de prendre toute la largeur.
+- **Page Aujourd’hui sur l’écran externe** (au choix, Réglages → Accueil → Pages) : tes widgets sur une page à gauche de l’accueil.
+
 ## Build 35
 
 - **Page Aujourd’hui sans coupure** : le bas de la colonne s’estompe en douceur au lieu d’être coupé net au-dessus du dock, avec un peu de marge pour remonter entièrement la dernière carte.
