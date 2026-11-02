@@ -3,6 +3,10 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 37
+
+- **Bouton « Modifier » réparé** : le fondu du haut de la page Aujourd’hui rognait le bouton. Le titre et le bouton sont maintenant fixes au-dessus des cartes, qui défilent seules en dessous.
+
 ## Build 36
 
 - **Bloc noir sous la note corrigé** : la page Aujourd’hui était réduite de toute la hauteur du clavier, alors que le dock en cache déjà une partie ; elle est maintenant réduite seulement de ce que le clavier recouvre vraiment.
