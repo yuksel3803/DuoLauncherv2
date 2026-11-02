@@ -7,6 +7,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import java.time.LocalDateTime
 
 /**
@@ -31,4 +36,14 @@ fun rememberMinute(): LocalDateTime {
         }
     }
     return now
+}
+
+/** Once focused, scrolls the field into view again after the keyboard has finished opening. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+fun Modifier.keepAboveKeyboard(): Modifier = composed {
+    val requester = androidx.compose.runtime.remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    bringIntoViewRequester(requester).onFocusEvent { state ->
+        if (state.isFocused) scope.launch { repeat(3) { delay(220); requester.bringIntoView() } }
+    }
 }

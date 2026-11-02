@@ -121,7 +121,7 @@ fun TasksCard() {
             verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.weight(1f)) {
                 if (draft.isEmpty()) Text("Ajouter un rappel…", color = Holo.Muted, fontSize = 14.sp)
-                BasicTextField(draft, { draft = it }, Modifier.fillMaxWidth(), singleLine = true,
+                BasicTextField(draft, { draft = it }, Modifier.fillMaxWidth().keepAboveKeyboard(), singleLine = true,
                     textStyle = TextStyle(color = Holo.Ink, fontSize = 14.sp), cursorBrush = SolidColor(Holo.Violet),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { add() }))
             }

@@ -3,6 +3,10 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 34
+
+- **Écrire dans la note sans être caché par le clavier** : la page Aujourd’hui se raccourcit au-dessus du clavier et fait remonter la carte en cours (Note rapide, Rappels). La grille d’applis, elle, ne bouge pas.
+
 ## Build 33
 
 - **Poignée du dock à gauche ou à droite** : Réglages → Accueil → Dock → « Côté de la poignée ». Le dock s’ouvre du même côté.

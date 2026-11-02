@@ -1,1 +1,1 @@
-- Dock dans les applis : choisis le côté de la poignée, gauche ou droite (Réglages → Accueil → Dock → Côté de la poignée).
+- Note rapide et Rappels : quand tu écris, la carte remonte au-dessus du clavier, tu vois ce que tu tapes.

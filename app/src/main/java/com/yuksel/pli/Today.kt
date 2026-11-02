@@ -45,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -131,7 +132,8 @@ fun TodayColumn(
 ) {
     val items = launcher.layout.today
     val nowPlaying by MediaWatcher.nowPlaying.collectAsState()
-    Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    // The keyboard shrinks the column (not the home grid), so the card being typed in stays above it.
+    Column(modifier.imePadding().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if (showTitle) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IridescentText("Aujourd’hui", 32.sp, Modifier.weight(1f), letterSpacing = (-.5).sp)
             PillButton(if (editing) "Terminé" else "Modifier", highlighted = editing) { onEditing(!editing) }
@@ -381,7 +383,7 @@ private fun NoteCard(launcher: Launcher) {
         .background(Brush.linearGradient(listOf(Holo.Cyan.copy(alpha = .22f), Holo.Violet.copy(alpha = .22f), Holo.Pink.copy(alpha = .22f))), cardShape)
         .border(1.dp, Color.White.copy(alpha = .22f), cardShape).padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("NOTE", color = Holo.Soft, fontSize = 11.sp, letterSpacing = 2.5.sp)
-        BasicTextField(text, { text = it; launcher.store.note = it }, Modifier.fillMaxWidth().heightIn(min = 44.dp),
+        BasicTextField(text, { text = it; launcher.store.note = it }, Modifier.fillMaxWidth().heightIn(min = 44.dp).keepAboveKeyboard(),
             textStyle = TextStyle(color = Holo.Ink, fontSize = 15.sp, lineHeight = 21.sp), cursorBrush = SolidColor(Holo.Violet),
             decorationBox = { inner ->
                 if (text.isEmpty()) Text("Écris une note…", color = Holo.Soft.copy(alpha = .6f), fontSize = 15.sp)
