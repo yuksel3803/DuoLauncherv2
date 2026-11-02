@@ -292,7 +292,7 @@ fun HomePages(
     drag.slopPx = with(LocalDensity.current) { 14.dp.toPx() }
 
     // Holding an icon near the left or right edge turns the page.
-    val edgePx = with(LocalDensity.current) { 28.dp.toPx() }
+    val edgePx = with(LocalDensity.current) { 56.dp.toPx() }
     val edge = when {
         !drag.active || drag.gridRect == Rect.Zero -> 0
         drag.pointer.x < drag.gridRect.left + edgePx && drag.pointer.y in drag.gridRect.top..drag.gridRect.bottom -> -1
@@ -300,16 +300,20 @@ fun HomePages(
         else -> 0
     }
     LaunchedEffect(edge) {
+        var first = true
         while (edge != 0) {
-            delay(600)
+            delay(if (first) 380 else 700)
+            first = false
             val next = (pager.currentPage + edge).coerceIn(pageOffset, pager.pageCount - 1)
             if (next == pager.currentPage) break
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
             pager.animateScrollToPage(next)
         }
     }
 
     val transition = LocalPageTransition.current
-    HorizontalPager(pager, modifier.onGloballyPositioned { drag.gridRect = it.boundsInRoot() },
+    Box(modifier) {
+    HorizontalPager(pager, Modifier.fillMaxSize().onGloballyPositioned { drag.gridRect = it.boundsInRoot() },
         beyondViewportPageCount = 8, key = { it }) { page ->
         if (page < pageOffset) { leadingPage?.invoke(page); return@HorizontalPager }
         val homePage = page - pageOffset
@@ -350,6 +354,19 @@ fun HomePages(
                 }
             }
         }
+    }
+    // While dragging an icon: glowing bands on both sides; hold the icon in one to turn the page.
+    if (drag.active && drag.screen == screen) {
+        val glowLeft by animateFloatAsState(if (edge == -1) 1f else .25f, label = "edgeL")
+        val glowRight by animateFloatAsState(if (edge == 1) 1f else .25f, label = "edgeR")
+        Box(Modifier.matchParentSize().drawBehind {
+            val band = 10.dp.toPx()
+            drawRect(Brush.horizontalGradient(listOf(Holo.Violet.copy(alpha = .55f * glowLeft), Color.Transparent), 0f, band * 3),
+                size = androidx.compose.ui.geometry.Size(band * 3, size.height))
+            drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Holo.Cyan.copy(alpha = .55f * glowRight)), size.width - band * 3, size.width),
+                topLeft = Offset(size.width - band * 3, 0f), size = androidx.compose.ui.geometry.Size(band * 3, size.height))
+        })
+    }
     }
     // Keep the pager in range after icons are removed.
     LaunchedEffect(homePages, pager.pageCount) {

@@ -10,6 +10,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import java.time.LocalDateTime
@@ -46,4 +52,18 @@ fun Modifier.keepAboveKeyboard(): Modifier = composed {
     bringIntoViewRequester(requester).onFocusEvent { state ->
         if (state.isFocused) scope.launch { repeat(3) { delay(220); requester.bringIntoView() } }
     }
+}
+
+/**
+ * Bottom padding equal to the part of this element the keyboard really covers (not the whole keyboard height:
+ * the dock and the navigation bar already sit below it), so nothing is left as an empty band.
+ */
+fun Modifier.keyboardOverlapPadding(): Modifier = composed {
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val imeBottom = WindowInsets.ime.getBottom(density)
+    val view = androidx.compose.ui.platform.LocalView.current
+    var bottomInWindow by androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    val overlap = if (imeBottom <= 0) 0 else (bottomInWindow - (view.rootView.height - imeBottom)).coerceAtLeast(0)
+    this.onGloballyPositioned { bottomInWindow = (it.positionInWindow().y + it.size.height).toInt() }
+        .padding(bottom = with(density) { overlap.toDp() })
 }

@@ -274,7 +274,7 @@ fun PliApp(host: PliHost, signals: HostSignals) {
                 val halfFolded = rememberHalfFolded(wide && launcher.settings.tabletop && onScreen && maxHeight > maxWidth)
                 if (wide && halfFolded) TabletopHome(launcher, today, onOpenApp = { a, r -> open(a, r) }, onOpenPackage = host::openPackage)
                 else if (wide) key("inner", launcher.settings.discover) { InnerHome(host, signals, today, drag, actions, swipesOn, showToday) }
-                else key("cover", launcher.settings.discover) { CoverHome(host, signals, today, drag, actions, swipesOn, showToday) }
+                else key("cover", launcher.settings.discover, launcher.settings.coverToday) { CoverHome(host, signals, today, drag, actions, swipesOn, showToday) }
             }
             // Bin at the top while dragging: a full-width bar over the clock, drop an icon on it to take it off the home screen.
             if (drag.active) TopBar(Modifier, highlight = false) {
@@ -501,7 +501,9 @@ private fun CoverHome(host: PliHost, signals: HostSignals, today: TodayState, dr
     val items = launcher.visibleHome(Screen.COVER)
     val nowPlaying by MediaWatcher.nowPlaying.collectAsState()
     val discover = launcher.settings.discover
-    val lead = if (discover) 1 else 0
+    // Pages left of home: Actus (optional), then Aujourd'hui (optional on the cover).
+    val coverToday = launcher.settings.coverToday
+    val lead = (if (discover) 1 else 0) + (if (coverToday) 1 else 0)
     var homePages by remember { mutableIntStateOf(1) }
     val pager = rememberPagerState(initialPage = lead) { lead + homePages + if (drag.active) 1 else 0 }
     HomePressScroll(signals, pager, lead)
@@ -520,7 +522,13 @@ private fun CoverHome(host: PliHost, signals: HostSignals, today: TodayState, dr
                     onOpenApp = { a, r -> actions.open(a, r) }, onOpenFolder = actions.openFolder,
                     onMenu = actions.menu, onCloseMenu = actions.closeMenu, onEmptyHold = { actions.emptyHold(Screen.COVER, it, metrics.capacity) },
                     onEmptyDoubleTap = { actions.gesture(launcher.settings.doubleTap) }, homePages = pages, topPadding = headerHeight,
-                    leadingPage = { NewsPage(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp), actions.read) })
+                    leadingPage = { page ->
+                        if (discover && page == 0) NewsPage(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp), actions.read)
+                        else TodayColumn(launcher, host.widgets, today, actions.todayEditing(),
+                            Modifier.fillMaxSize().padding(start = 18.dp, end = 18.dp, top = 8.dp),
+                            onEditing = actions.setTodayEditing, onAddWidget = actions.addWidget, onPermission = host::requestPermission,
+                            onNotificationAccess = host::openNotificationAccess, onSettings = actions.settings, onOpenPackage = host::openPackage)
+                    })
                 PageDots(pager, pager.pageCount, lead, modifier = Modifier.align(Alignment.CenterHorizontally))
             }
             val position = pager.currentPage + pager.currentPageOffsetFraction
@@ -538,7 +546,10 @@ private fun CoverHome(host: PliHost, signals: HostSignals, today: TodayState, dr
                 }
             }
         }
-        Dock(launcher, Screen.COVER, drag, 54.dp, Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 10.dp),
+        // The dock's frame hugs its icons instead of spanning the whole width.
+        val coverDockCount = launcher.visibleDock(Screen.COVER).size.coerceAtLeast(3)
+        Dock(launcher, Screen.COVER, drag, 54.dp, Modifier.align(Alignment.CenterHorizontally).widthIn(max = (coverDockCount * 70 + 36).dp)
+            .fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 10.dp),
             onOpenApp = { a, r -> actions.open(a, r) }, onMenu = actions.menu, onCloseMenu = actions.closeMenu, onSearch = null)
     }
 }

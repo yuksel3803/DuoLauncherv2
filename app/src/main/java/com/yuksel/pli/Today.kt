@@ -134,7 +134,7 @@ fun TodayColumn(
     val nowPlaying by MediaWatcher.nowPlaying.collectAsState()
     // The keyboard shrinks the column (not the home grid), so the card being typed in stays above it.
     // Soft top and bottom edges instead of a hard cut above the dock.
-    Column(modifier.imePadding().fadeEdges().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(modifier.keyboardOverlapPadding().fadeEdges().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if (showTitle) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IridescentText("Aujourd’hui", 32.sp, Modifier.weight(1f), letterSpacing = (-.5).sp)
             PillButton(if (editing) "Terminé" else "Modifier", highlighted = editing) { onEditing(!editing) }

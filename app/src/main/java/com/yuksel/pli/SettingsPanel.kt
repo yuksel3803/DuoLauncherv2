@@ -179,7 +179,7 @@ private val SETTINGS_INDEX: Map<String, String> = mapOf(
     "Grille" to "grille colonnes lignes ecran externe interne taille",
     "Dock" to "dock taille applis recentes cacher masquer automatique flottant multitache ecran partage dans les applis poignee",
     "Horloge" to "horloge recherche google finder bouton style analogique aiguilles lettres grasse",
-    "Pages" to "pages verrouiller disposition actus nouvelles applis",
+    "Pages" to "pages verrouiller disposition actus nouvelles applis widgets aujourd hui ecran externe",
     "Suggestions" to "suggestions contexte voiture casque pastille nouveau nouvelles applis",
     "Pliage" to "pliage continuite miroir chevalet plier deplier flex charniere",
     "Masquées" to "applis masquees cachees afficher",
@@ -586,6 +586,8 @@ private fun SettingsOptions(
         SettingsCategory.HOME to "Pages" -> Section("Pages d’accueil") {
             ToggleRow("Verrouiller la disposition", "Empêche de déplacer ou retirer des icônes par erreur", s.lockLayout) { v -> launcher.updateSettings { it.copy(lockLayout = v) } }
             ToggleRow("Page Actus", "Tout à gauche : Google Actualités, Le Monde, franceinfo", s.discover) { v -> launcher.updateSettings { it.copy(discover = v) } }
+            ToggleRow("Page Aujourd’hui sur l’écran externe", "Tes widgets (météo, agenda, note, widgets Android…) sur une page à gauche de l’accueil de l’écran externe",
+                s.coverToday) { v -> launcher.updateSettings { it.copy(coverToday = v) } }
             ToggleRow("Ajouter les nouvelles applis", "Une appli installée apparaît sur les deux écrans", s.addNewApps) { v -> launcher.updateSettings { it.copy(addNewApps = v) } }
         }
         SettingsCategory.HOME to "Suggestions" -> {

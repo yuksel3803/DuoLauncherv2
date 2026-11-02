@@ -1,2 +1,4 @@
-- La page Aujourd'hui ne s'arrête plus d'un coup au-dessus du dock : elle s'estompe en douceur, et la dernière carte peut remonter entièrement.
-- La pastille des applis récentes du dock (par exemple le « 8 » de Discord) n'est plus coupée.
+- Plus de bloc noir quand tu écris dans la note : la page Aujourd'hui remonte juste au-dessus du clavier.
+- Déplacer une icône vers une autre page est plus facile : bande de bord plus large, page qui tourne plus vite, bords lumineux et petite vibration.
+- Le dock de l'écran externe n'est plus un rectangle de toute la largeur : il épouse ses icônes.
+- Nouveau (au choix) : la page Aujourd'hui aussi sur l'écran externe, à gauche de l'accueil (Réglages → Accueil → Pages).
