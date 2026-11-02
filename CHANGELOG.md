@@ -3,6 +3,11 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 35
+
+- **Page Aujourd’hui sans coupure** : le bas de la colonne s’estompe en douceur au lieu d’être coupé net au-dessus du dock, avec un peu de marge pour remonter entièrement la dernière carte.
+- **Pastilles des applis récentes du dock** : elles ne sont plus rognées (les icônes récentes étaient semi-transparentes, ce qui coupait tout ce qui dépassait).
+
 ## Build 34
 
 - **Écrire dans la note sans être caché par le clavier** : la page Aujourd’hui se raccourcit au-dessus du clavier et fait remonter la carte en cours (Note rapide, Rappels). La grille d’applis, elle, ne bouge pas.
