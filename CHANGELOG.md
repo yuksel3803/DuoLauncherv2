@@ -3,6 +3,12 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 39
+
+- **Page bloquée à moitié corrigée** : survoler une pastille de page lançait le changement de page, mais un petit mouvement du doigt l’annulait en cours de route. Les changements de page vont maintenant toujours jusqu’au bout.
+- **Plus d’icône perdue** : pendant qu’une page tourne, il n’y a plus de case cible ; on lâche une fois la page arrivée (la cible se met à jour même si le doigt ne bouge plus). Si on lâche quand même en route, la page se recale.
+- **Pastilles de pages mieux placées** : sur l’écran externe, elles apparaissent dans la zone de l’horloge au lieu de cacher la dernière rangée d’icônes.
+
 ## Build 38
 
 - **Écran Récents de Fold Launcher Pro** : l’écran des applis récentes de Samsung n’est disponible qu’avec One UI Home ; avec un autre launcher, One UI affiche une version de secours (vignettes écrasées). Fold Launcher Pro a maintenant son propre écran Récents : grandes cartes des dernières applis (heure d’utilisation), toucher pour ouvrir, « À côté de… » pour l’écran partagé avec l’appli précédente, × pour en retirer une, « Tout fermer » pour libérer la mémoire. Il s’ouvre par un geste (Réglages → Gestes → « Applis récentes ») ou par le bouton « Récents » du dock dans les applis. Demande l’accès aux données d’utilisation.
