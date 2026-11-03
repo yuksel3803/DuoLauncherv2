@@ -139,6 +139,12 @@ class DragState {
 
     fun clear() { source = null; active = false; spot = null }
 
+    /** True while the home pages are still sliding: no drop target until they settle (cells are moving). */
+    var pagesMoving: () -> Boolean = { false }
+
+    /** Recomputes the target under a finger that stayed still (after a page turn). */
+    fun refresh() { if (active) spot = hit(pointer) }
+
     /** Page buttons shown while dragging (page index → bounds); hovering one turns to that page. */
     val pageChips = HashMap<Int, Rect>()
     var trashRect = Rect.Zero
@@ -158,6 +164,7 @@ class DragState {
             return DropSpot.Dock(screen, index)
         }
         if (!gridRect.contains(p)) return null
+        if (pagesMoving()) return null
         // Over a page button: no drop there, the page turns instead.
         if (pageChips.values.any { it.contains(p) }) return null
         val dragged = draggedId
@@ -303,6 +310,9 @@ fun HomePages(
         drag.pointer.x > drag.gridRect.right - edgePx && drag.pointer.y in drag.gridRect.top..drag.gridRect.bottom -> 1
         else -> 0
     }
+    // Page turns run in their own scope: moving the finger never stops a page halfway.
+    drag.pagesMoving = { pager.currentPageOffsetFraction != 0f || pager.isScrollInProgress }
+    LaunchedEffect(pager.isScrollInProgress) { if (!pager.isScrollInProgress) { delay(60); drag.refresh() } }
     LaunchedEffect(edge) {
         var first = true
         while (edge != 0) {
@@ -311,8 +321,12 @@ fun HomePages(
             val next = (pager.currentPage + edge).coerceIn(pageOffset, pager.pageCount - 1)
             if (next == pager.currentPage) break
             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-            pager.animateScrollToPage(next)
+            scope.launch { pager.animateScrollToPage(next) }.join()
         }
+    }
+    // A drag that ends while the pages slide still lands on a whole page.
+    LaunchedEffect(drag.active) {
+        if (!drag.active && pager.currentPageOffsetFraction != 0f) pager.animateScrollToPage(pager.currentPage)
     }
 
     val transition = LocalPageTransition.current
@@ -371,10 +385,12 @@ fun HomePages(
             if (target == pager.currentPage) return@LaunchedEffect
             delay(200)
             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-            pager.animateScrollToPage(target)
+            scope.launch { pager.animateScrollToPage(target) }
         }
         androidx.compose.runtime.DisposableEffect(Unit) { onDispose { drag.pageChips.clear() } }
-        if (chips.size > 1) Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp)
+        // Cover: in the clock area, above the icons; inner screen: just above the page dots.
+        if (chips.size > 1) Row(Modifier.align(if (topPadding > 80.dp) Alignment.TopCenter else Alignment.BottomCenter)
+            .padding(top = (topPadding - 62.dp).coerceAtLeast(0.dp), bottom = 2.dp)
             .glass(RoundedCornerShape(50), .14f).padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             chips.forEach { page ->

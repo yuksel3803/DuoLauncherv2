@@ -1,2 +1,2 @@
-- Applis récentes à la Fold Launcher Pro : grandes cartes de tes dernières applis, toucher pour ouvrir, « À côté » pour l'écran partagé, « Tout fermer » pour libérer la mémoire. S'ouvre avec un geste (Réglages → Gestes → « Applis récentes ») ou le bouton « Récents » du dock dans les applis.
-- Déplacer une icône vers une autre page : pendant le déplacement, de grosses pastilles numérotées apparaissent en bas (1, 2, 3, +). Survole-en une et la page change tout de suite.
+- Déplacer une icône vers une autre page : la page ne reste plus bloquée à moitié quand le doigt bouge, et l'icône ne peut plus être lâchée pendant que la page tourne (elle ne disparaît plus).
+- Sur l'écran externe, les pastilles de pages s'affichent dans la zone de l'horloge et ne cachent plus la dernière rangée d'icônes.
