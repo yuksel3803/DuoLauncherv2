@@ -1,2 +1,3 @@
-- Déplacer une icône vers une autre page : lâche-la n'importe où sur la page (zone de l'horloge, pastilles, espace vide) et elle se range dans la première case libre. Plus besoin de viser une case.
-- Ça marche aussi avec la nouvelle page « + ».
+- Nouvel écran « Gérer les pages » : toutes tes pages en miniature, pour l'écran externe et l'écran interne.
+- Supprime une page même si elle contient des applis (elles restent dans la liste des applis), déplace-la à gauche ou à droite, ajoute une page. « Annuler » remet tout comme avant.
+- Ouvre-le par un appui long sur une case vide → « Gérer les pages », ou Réglages → Accueil → Pages.

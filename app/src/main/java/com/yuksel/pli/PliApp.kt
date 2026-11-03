@@ -112,7 +112,7 @@ class HostSignals {
     var recentsTaps by mutableIntStateOf(0)
 }
 
-private enum class Panel { NONE, SEARCH, DRAWER, SETTINGS, WIDGETS, HOME_MENU, ADD_APPS, GUIDE, ONBOARDING, DRAW, VAULT, RECENTS }
+private enum class Panel { NONE, SEARCH, DRAWER, SETTINGS, WIDGETS, HOME_MENU, ADD_APPS, GUIDE, ONBOARDING, DRAW, VAULT, RECENTS, PAGES }
 
 /**
  * Swipe up / down on the home screen. It watches the touch before the icons and pages do
@@ -188,6 +188,7 @@ fun PliApp(host: PliHost, signals: HostSignals) {
     val continuity = remember { Continuity() }
     var mirror by remember { mutableStateOf<List<String>?>(null) }
     var settingsStart by remember { mutableStateOf<String?>(null) }
+    var pagesScreen by remember { mutableStateOf(Screen.COVER) }
     LaunchedEffect(panel) { if (panel != Panel.SETTINGS) settingsStart = null }
     fun closeAll() { panel = Panel.NONE; menu = null; folder = null; todayEditing = false; drag.clear(); selection.clear(); mirror = null }
     LaunchedEffect(signals.homePresses) { if (signals.homePresses > 0) { closeAll(); article = null } }
@@ -345,6 +346,7 @@ fun PliApp(host: PliHost, signals: HostSignals) {
                 RecentsPanel(launcher, m, onOpen = { a, r -> panel = Panel.NONE; open(a, r) },
                     onSplit = { first, second -> panel = Panel.NONE; host.launchSplit(first, second) }, onClose = { panel = Panel.NONE })
             }
+            FullPanel(panel == Panel.PAGES, maxWidth = 1100.dp) { m -> PagesManager(launcher, pagesScreen, m) { panel = Panel.NONE } }
             FullPanel(panel == Panel.VAULT) { m -> VaultPanel(launcher, m, onOpen = { a, r -> open(a, r) }, onClose = { panel = Panel.NONE }) }
             FullPanel(panel == Panel.DRAW) { m ->
                 DrawPad(launcher, m, onOpen = { a, r -> open(a, r) }, onSettings = { settingsStart = "Dessins"; panel = Panel.SETTINGS },
@@ -378,6 +380,7 @@ fun PliApp(host: PliHost, signals: HostSignals) {
                         onExport = host::exportBackup, onImport = host::importBackup,
                         onGuide = { panel = Panel.GUIDE }, onOnboarding = { panel = Panel.ONBOARDING },
                         startOn = settingsStart,
+                        onManagePages = { pagesScreen = screen; panel = Panel.PAGES },
                         accessibilityOn = PliAccessibility.enabled(context), onAccessibility = host::openAccessibilitySettings)
                 }
             }
@@ -415,7 +418,8 @@ fun PliApp(host: PliHost, signals: HostSignals) {
                         val other = if (menuScreen == Screen.INNER) Screen.COVER else Screen.INNER
                         launcher.edit("Disposition copiée") { LayoutEdits.copyHome(it, other, menuScreen) }
                     },
-                    onSort = { mode -> launcher.sortPage(menuScreen, page, cap, mode) })
+                    onSort = { mode -> launcher.sortPage(menuScreen, page, cap, mode) },
+                    onManagePages = { pagesScreen = menuScreen; panel = Panel.PAGES })
             }
             folder?.let { (id, s) ->
                 FolderPanel(id, s, launcher, renameFolder, onDismiss = { folder = null }, onOpen = { app, r -> open(app, r) },

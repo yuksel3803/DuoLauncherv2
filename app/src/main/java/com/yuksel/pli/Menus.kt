@@ -73,6 +73,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Sort
+import androidx.compose.material.icons.rounded.ViewCarousel
 import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -282,7 +283,7 @@ fun AppMenu(request: MenuRequest, launcher: Launcher, currentScreen: Screen, onD
 fun HomeMenu(onDismiss: () -> Unit, onWidgets: (() -> Unit)?, onSettings: () -> Unit, onApps: () -> Unit, onToday: (() -> Unit)?,
     onAddPage: () -> Unit, onDeletePage: (() -> Unit)?, onSelect: () -> Unit = {}, onAddApps: () -> Unit = {},
     locked: Boolean = false, onLock: (Boolean) -> Unit = {}, copyFrom: String? = null, onCopy: () -> Unit = {},
-    onSort: ((String) -> Unit)? = null) {
+    onSort: ((String) -> Unit)? = null, onManagePages: (() -> Unit)? = null) {
     var sorting by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxSize()) {
         Scrim(.35f, onDismiss)
@@ -294,6 +295,7 @@ fun HomeMenu(onDismiss: () -> Unit, onWidgets: (() -> Unit)?, onSettings: () -> 
                     MenuRow(Icons.Rounded.Checklist, "Sélectionner des applis") { onDismiss(); onSelect() }
                     MenuRow(Icons.Rounded.AddBox, "Ajouter une page") { onDismiss(); onAddPage() }
                     if (onDeletePage != null) MenuRow(Icons.Rounded.DeleteSweep, "Supprimer cette page", Holo.Pink) { onDismiss(); onDeletePage() }
+                    if (onManagePages != null) MenuRow(Icons.Rounded.ViewCarousel, "Gérer les pages") { onDismiss(); onManagePages() }
                     if (copyFrom != null) MenuRow(Icons.Rounded.ContentCopy, "Copier la disposition de $copyFrom") { onDismiss(); onCopy() }
                     if (onSort != null) {
                         MenuRow(Icons.Rounded.Sort, if (sorting) "Ranger cette page…" else "Ranger cette page") { sorting = !sorting }

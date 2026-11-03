@@ -420,6 +420,8 @@ object LayoutEdits {
     /** Adds an empty page at the end. */
     fun addPage(layout: HomeLayout, screen: Screen) = layout.withPages(screen, layout.pages(screen) + 1)
 
+    fun withPages(layout: HomeLayout, screen: Screen, n: Int) = layout.withPages(screen, n)
+
     /** Removes [page] if it is empty; the pages after it move back one. */
     fun deletePage(layout: HomeLayout, screen: Screen, page: Int, capacity: Int): HomeLayout {
         val list = layout.home(screen)
@@ -427,6 +429,41 @@ object LayoutEdits {
         if (range.any { list.getOrElse(it) { EMPTY } != EMPTY } || layout.pages(screen) <= 1) return layout
         val out = list.filterIndexed { i, _ -> i !in range }
         return layout.withHome(screen, out).withPages(screen, layout.pages(screen) - 1)
+    }
+
+    /** Number of pages a screen shows (at least the saved count, at least what its icons need). */
+    fun pageCount(layout: HomeLayout, screen: Screen, capacity: Int): Int =
+        maxOf(layout.pages(screen), (layout.home(screen).size + capacity - 1) / capacity.coerceAtLeast(1), 1)
+
+    /**
+     * Deletes a page even if it has icons: they leave the home screen (apps stay in the app list); folders only
+     * on that page are dissolved. The last remaining page can't be deleted.
+     */
+    fun removePage(layout: HomeLayout, screen: Screen, page: Int, capacity: Int): HomeLayout {
+        val pages = pageCount(layout, screen, capacity)
+        if (pages <= 1 || page !in 0 until pages) return layout
+        val list = layout.home(screen)
+        val range = page * capacity until (page + 1) * capacity
+        val removed = list.filterIndexed { i, id -> i in range && HomeLayout.isFolder(id) }.toSet()
+        val out = list.filterIndexed { i, _ -> i !in range }.dropLastWhile { it == EMPTY }
+        var next = layout.withHome(screen, out).withPages(screen, pages - 1)
+        val other = if (screen == Screen.COVER) next.inner else next.cover
+        val orphan = removed.filter { it !in other }
+        if (orphan.isNotEmpty()) next = next.copy(folders = next.folders - orphan.toSet())
+        return next
+    }
+
+    /** Swaps page [from] with page [to] (icons move with their page, cell for cell). */
+    fun movePage(layout: HomeLayout, screen: Screen, from: Int, to: Int, capacity: Int): HomeLayout {
+        val pages = pageCount(layout, screen, capacity)
+        if (from == to || from !in 0 until pages || to !in 0 until pages) return layout
+        val list = layout.home(screen).toMutableList()
+        while (list.size < pages * capacity) list += EMPTY
+        for (k in 0 until capacity) {
+            val a = from * capacity + k; val b = to * capacity + k
+            val t = list[a]; list[a] = list[b]; list[b] = t
+        }
+        return layout.withHome(screen, list.dropLastWhile { it == EMPTY }).withPages(screen, pages)
     }
 
     /** Re-arranges slots for a new grid size, keeping each icon's page, row and column when it still fits. */

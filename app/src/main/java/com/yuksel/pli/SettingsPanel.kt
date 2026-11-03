@@ -179,7 +179,7 @@ private val SETTINGS_INDEX: Map<String, String> = mapOf(
     "Grille" to "grille colonnes lignes ecran externe interne taille",
     "Dock" to "dock taille applis recentes cacher masquer automatique flottant multitache ecran partage dans les applis poignee",
     "Horloge" to "horloge recherche google finder bouton style analogique aiguilles lettres grasse",
-    "Pages" to "pages verrouiller disposition actus nouvelles applis widgets aujourd hui ecran externe",
+    "Pages" to "pages gerer supprimer page deplacer ajouter verrouiller disposition actus nouvelles applis widgets aujourd hui ecran externe",
     "Suggestions" to "suggestions contexte voiture casque pastille nouveau nouvelles applis",
     "Pliage" to "pliage continuite miroir chevalet plier deplier flex charniere",
     "Masquées" to "applis masquees cachees afficher",
@@ -295,7 +295,7 @@ fun SettingsPanel(
     onClose: () -> Unit, onMakeDefault: () -> Unit, onNotificationAccess: () -> Unit, onLocation: () -> Unit,
     onWeatherChanged: () -> Unit,
     onExport: () -> Unit = {}, onImport: () -> Unit = {}, accessibilityOn: Boolean = false, onAccessibility: () -> Unit = {},
-    onGuide: () -> Unit = {}, onOnboarding: () -> Unit = {}, startOn: String? = null,
+    onGuide: () -> Unit = {}, onOnboarding: () -> Unit = {}, startOn: String? = null, onManagePages: () -> Unit = {},
 ) {
     var picking by remember { mutableStateOf<String?>(null) }
     var pickFor by remember { mutableStateOf<((AppInfo) -> Unit)?>(null) }
@@ -364,7 +364,7 @@ fun SettingsPanel(
                         }
                         SettingsOptions(category, name, launcher, isDefaultHome, badgesAllowed, onMakeDefault, onNotificationAccess, onLocation,
                             onWeatherChanged, onExport, onImport, accessibilityOn, onAccessibility, onPick = { picking = it },
-                            onGuide = onGuide, onOnboarding = onOnboarding, onPickApp = { pickFor = it })
+                            onGuide = onGuide, onOnboarding = onOnboarding, onPickApp = { pickFor = it }, onManagePages = onManagePages)
                     }
                 }
             }
@@ -437,7 +437,7 @@ private fun SettingsOptions(
     category: SettingsCategory, sub: String, launcher: Launcher, isDefaultHome: Boolean, badgesAllowed: Boolean,
     onMakeDefault: () -> Unit, onNotificationAccess: () -> Unit, onLocation: () -> Unit, onWeatherChanged: () -> Unit,
     onExport: () -> Unit, onImport: () -> Unit, accessibilityOn: Boolean, onAccessibility: () -> Unit, onPick: (String) -> Unit,
-    onGuide: () -> Unit = {}, onOnboarding: () -> Unit = {}, onPickApp: ((AppInfo) -> Unit) -> Unit = {},
+    onGuide: () -> Unit = {}, onOnboarding: () -> Unit = {}, onPickApp: ((AppInfo) -> Unit) -> Unit = {}, onManagePages: () -> Unit = {},
 ) {
     val s = launcher.settings
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -584,6 +584,7 @@ private fun SettingsOptions(
         }
         }
         SettingsCategory.HOME to "Pages" -> Section("Pages d’accueil") {
+            ActionRow("Gérer les pages", "Voir toutes les pages en miniature, les déplacer, en supprimer ou en ajouter", "Ouvrir", onManagePages)
             ToggleRow("Verrouiller la disposition", "Empêche de déplacer ou retirer des icônes par erreur", s.lockLayout) { v -> launcher.updateSettings { it.copy(lockLayout = v) } }
             ToggleRow("Page Actus", "Tout à gauche : Google Actualités, Le Monde, franceinfo", s.discover) { v -> launcher.updateSettings { it.copy(discover = v) } }
             ToggleRow("Page Aujourd’hui sur l’écran externe", "Tes widgets (météo, agenda, note, widgets Android…) sur une page à gauche de l’accueil de l’écran externe",
