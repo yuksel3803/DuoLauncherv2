@@ -142,6 +142,23 @@ class DragState {
     /** True while the home pages are still sliding: no drop target until they settle (cells are moving). */
     var pagesMoving: () -> Boolean = { false }
 
+    /** The home page the pager is on or heading to (negative on Actus / Aujourd'hui). */
+    var targetHomePage: () -> Int = { currentHomePage }
+
+    /**
+     * Where a release lands: the cell under the finger, or, when the finger is on the page but not over a cell
+     * (clock area, page buttons, a gap, a page still sliding), the first free cell of that page.
+     */
+    fun finalSpot(): DropSpot? {
+        spot?.let { return it }
+        if (!active || dockRect.contains(pointer) || trashRect.contains(pointer)) return null
+        val page = targetHomePage()
+        if (page < 0) return null
+        val start = page * pageCapacity
+        val index = (start until start + pageCapacity).firstOrNull { i -> homeIds.getOrNull(i).isNullOrEmpty() } ?: return null
+        return if (index < homeSlots) DropSpot.Home(screen, index) else null
+    }
+
     /** Recomputes the target under a finger that stayed still (after a page turn). */
     fun refresh() { if (active) spot = hit(pointer) }
 
@@ -312,6 +329,7 @@ fun HomePages(
     }
     // Page turns run in their own scope: moving the finger never stops a page halfway.
     drag.pagesMoving = { pager.currentPageOffsetFraction != 0f || pager.isScrollInProgress }
+    drag.targetHomePage = { pager.targetPage - pageOffset }
     LaunchedEffect(pager.isScrollInProgress) { if (!pager.isScrollInProgress) { delay(60); drag.refresh() } }
     LaunchedEffect(edge) {
         var first = true
@@ -363,10 +381,10 @@ fun HomePages(
                                 }
                             }
                             folder != null -> BigFolder(folder, index, screen, launcher, metrics.icon, drag, onOpenApp, onOpenFolder, onMenu, onCloseMenu,
-                                onDrop = { drag.source?.let { s -> drag.spot?.let { sp -> applyDrop(launcher, s, sp, drag) } } })
+                                onDrop = { drag.source?.let { s -> drag.finalSpot()?.let { sp -> applyDrop(launcher, s, sp, drag) } } })
                             else -> HomeCell(id, index, screen, launcher, metrics.icon, labels, drag,
                                 onOpenApp, onOpenFolder, onMenu, onCloseMenu,
-                                onDrop = { drag.source?.let { s -> drag.spot?.let { sp -> applyDrop(launcher, s, sp, drag) } } })
+                                onDrop = { drag.source?.let { s -> drag.finalSpot()?.let { sp -> applyDrop(launcher, s, sp, drag) } } })
                         }
                     }
                 }
@@ -618,7 +636,7 @@ fun Dock(
                                 if (selection.active) selection.toggle(id) else onMenu(id, bounds, source)
                             },
                             onDragStarted = onCloseMenu,
-                            onDrop = { drag.source?.let { s -> drag.spot?.let { sp -> applyDrop(launcher, s, sp, drag) } } })
+                            onDrop = { drag.source?.let { s -> drag.finalSpot()?.let { sp -> applyDrop(launcher, s, sp, drag) } } })
                         .alpha(if (dragged) .25f else 1f)
                         .drawBehind {
                             if (before) drawRoundRect(Brush.verticalGradient(Holo.Iridescent), Offset(-8.dp.toPx(), 4.dp.toPx()),

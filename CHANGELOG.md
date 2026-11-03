@@ -3,6 +3,10 @@
 Tout ce qui change dans **Fold Launcher Pro**, build par build. La version la plus récente est en haut.
 Chaque build se télécharge dans les [releases](https://github.com/yuksel3803/DuoLauncherv2/releases), et le launcher propose lui-même d'installer les nouvelles (à partir de la build 17).
 
+## Build 40
+
+- **Lâcher n’importe où sur une page** : une icône lâchée sur une page sans viser de case (zone de l’horloge, pastilles de pages, espace vide, page encore en mouvement) se range dans la première case libre de cette page, au lieu de revenir à sa place. Pratique avec la nouvelle page « + ».
+
 ## Build 39
 
 - **Page bloquée à moitié corrigée** : survoler une pastille de page lançait le changement de page, mais un petit mouvement du doigt l’annulait en cours de route. Les changements de page vont maintenant toujours jusqu’au bout.

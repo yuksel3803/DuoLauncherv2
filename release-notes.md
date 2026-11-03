@@ -1,2 +1,2 @@
-- Déplacer une icône vers une autre page : la page ne reste plus bloquée à moitié quand le doigt bouge, et l'icône ne peut plus être lâchée pendant que la page tourne (elle ne disparaît plus).
-- Sur l'écran externe, les pastilles de pages s'affichent dans la zone de l'horloge et ne cachent plus la dernière rangée d'icônes.
+- Déplacer une icône vers une autre page : lâche-la n'importe où sur la page (zone de l'horloge, pastilles, espace vide) et elle se range dans la première case libre. Plus besoin de viser une case.
+- Ça marche aussi avec la nouvelle page « + ».
