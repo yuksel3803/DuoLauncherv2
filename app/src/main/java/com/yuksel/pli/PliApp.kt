@@ -108,9 +108,11 @@ class HostSignals {
     var isDefaultHome by mutableStateOf(true)
     /** Bumped when the update notification is tapped. */
     var updateTaps by mutableIntStateOf(0)
+    /** Bumped when the floating dock asks for the recent apps. */
+    var recentsTaps by mutableIntStateOf(0)
 }
 
-private enum class Panel { NONE, SEARCH, DRAWER, SETTINGS, WIDGETS, HOME_MENU, ADD_APPS, GUIDE, ONBOARDING, DRAW, VAULT }
+private enum class Panel { NONE, SEARCH, DRAWER, SETTINGS, WIDGETS, HOME_MENU, ADD_APPS, GUIDE, ONBOARDING, DRAW, VAULT, RECENTS }
 
 /**
  * Swipe up / down on the home screen. It watches the touch before the icons and pages do
@@ -231,6 +233,7 @@ fun PliApp(host: PliHost, signals: HostSignals) {
             action == "search" -> panel = Panel.SEARCH
             action == "drawer" -> panel = Panel.DRAWER
             action == "draw" -> panel = Panel.DRAW
+            action == "recents" -> panel = Panel.RECENTS
             action == "vault" -> host.authenticate("Ouvrir le coffre secret") { panel = Panel.VAULT }
             action.startsWith("app:") -> launcher.byId[action.removePrefix("app:")]?.let { open(it, null) }
         }
@@ -337,6 +340,11 @@ fun PliApp(host: PliHost, signals: HostSignals) {
                 }, onClose = { panel = Panel.NONE })
             }
             FullPanel(panel == Panel.GUIDE) { m -> GestureGuide(m) { panel = Panel.SETTINGS } }
+            LaunchedEffect(signals.recentsTaps) { if (signals.recentsTaps > 0) { menu = null; folder = null; panel = Panel.RECENTS } }
+            FullPanel(panel == Panel.RECENTS, maxWidth = 1100.dp) { m ->
+                RecentsPanel(launcher, m, onOpen = { a, r -> panel = Panel.NONE; open(a, r) },
+                    onSplit = { first, second -> panel = Panel.NONE; host.launchSplit(first, second) }, onClose = { panel = Panel.NONE })
+            }
             FullPanel(panel == Panel.VAULT) { m -> VaultPanel(launcher, m, onOpen = { a, r -> open(a, r) }, onClose = { panel = Panel.NONE }) }
             FullPanel(panel == Panel.DRAW) { m ->
                 DrawPad(launcher, m, onOpen = { a, r -> open(a, r) }, onSettings = { settingsStart = "Dessins"; panel = Panel.SETTINGS },

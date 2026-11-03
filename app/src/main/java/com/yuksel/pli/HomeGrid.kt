@@ -139,6 +139,8 @@ class DragState {
 
     fun clear() { source = null; active = false; spot = null }
 
+    /** Page buttons shown while dragging (page index → bounds); hovering one turns to that page. */
+    val pageChips = HashMap<Int, Rect>()
     var trashRect = Rect.Zero
     var splitRect = Rect.Zero
     var onSplit: (String) -> Unit = {}
@@ -156,6 +158,8 @@ class DragState {
             return DropSpot.Dock(screen, index)
         }
         if (!gridRect.contains(p)) return null
+        // Over a page button: no drop there, the page turns instead.
+        if (pageChips.values.any { it.contains(p) }) return null
         val dragged = draggedId
         val folderDrag = dragged != null && HomeLayout.isFolder(dragged)
         for ((i, r) in homeCells) {
@@ -359,6 +363,33 @@ fun HomePages(
     if (drag.active && drag.screen == screen) {
         val glowLeft by animateFloatAsState(if (edge == -1) 1f else .25f, label = "edgeL")
         val glowRight by animateFloatAsState(if (edge == 1) 1f else .25f, label = "edgeR")
+        // Big numbered page buttons at the bottom: hover one to jump straight to that page ("+" = a new page).
+        val chips = (pageOffset until pager.pageCount).toList()
+        val hovered = chips.firstOrNull { drag.pageChips[it]?.inflate(10f)?.contains(drag.pointer) == true }
+        LaunchedEffect(hovered) {
+            val target = hovered ?: return@LaunchedEffect
+            if (target == pager.currentPage) return@LaunchedEffect
+            delay(200)
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            pager.animateScrollToPage(target)
+        }
+        androidx.compose.runtime.DisposableEffect(Unit) { onDispose { drag.pageChips.clear() } }
+        if (chips.size > 1) Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp)
+            .glass(RoundedCornerShape(50), .14f).padding(horizontal = 8.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            chips.forEach { page ->
+                val on = page == pager.currentPage
+                val over = page == hovered
+                val isNew = page == pager.pageCount - 1 && page - pageOffset >= homePages
+                Box(Modifier.size(if (over) 54.dp else 46.dp).onGloballyPositioned { drag.pageChips[page] = it.boundsInRoot() }
+                    .clip(CircleShape)
+                    .then(if (on || over) Modifier.background(Brush.linearGradient(Holo.Iridescent), CircleShape) else Modifier.glass(CircleShape, .12f)),
+                    contentAlignment = Alignment.Center) {
+                    Text(if (isNew) "+" else "${page - pageOffset + 1}", color = if (on || over) Color(0xFF120A22) else Holo.Ink,
+                        fontSize = 17.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+                }
+            }
+        }
         Box(Modifier.matchParentSize().drawBehind {
             val band = 10.dp.toPx()
             drawRect(Brush.horizontalGradient(listOf(Holo.Violet.copy(alpha = .55f * glowLeft), Color.Transparent), 0f, band * 3),

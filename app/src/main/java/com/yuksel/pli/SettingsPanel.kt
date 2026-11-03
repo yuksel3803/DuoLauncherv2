@@ -739,7 +739,7 @@ internal fun WeatherSettings(launcher: Launcher, onLocation: () -> Unit, onWeath
 }
 
 private val GESTURE_ACTIONS = listOf("none" to "Rien", "lock" to "Verrouiller", "notifications" to "Notifications",
-    "search" to "Recherche", "drawer" to "Toutes les applis", "draw" to "Dessiner pour lancer", "vault" to "Coffre secret")
+    "search" to "Recherche", "drawer" to "Toutes les applis", "draw" to "Dessiner pour lancer", "vault" to "Coffre secret", "recents" to "Applis récentes")
 
 @Composable
 private fun GestureRow(title: String, value: String, launcher: Launcher, onPick: () -> Unit, onSelect: (String) -> Unit) {

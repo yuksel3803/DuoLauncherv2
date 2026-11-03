@@ -56,6 +56,7 @@ class MainActivity : ComponentActivity(), PliHost {
         lifecycleScope.launch { launcher.start() }
         Updater.schedule(this)
         if (intent?.getBooleanExtra(Updater.EXTRA_SHOW, false) == true) { Updater.forceNext = true; signals.updateTaps++ }
+        if (intent?.getBooleanExtra(EXTRA_RECENTS, false) == true) signals.recentsTaps++
         launcher.repository.listen { packageName, kind ->
             lifecycleScope.launch {
                 launcher.reloadApps(
@@ -101,6 +102,7 @@ class MainActivity : ComponentActivity(), PliHost {
         // Pressing Home while Pli is already in front closes panels and returns to the first page.
         if (intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_HOME)) signals.homePresses++
         if (intent.getBooleanExtra(Updater.EXTRA_SHOW, false)) { Updater.forceNext = true; signals.updateTaps++ }
+        if (intent.getBooleanExtra(EXTRA_RECENTS, false)) signals.recentsTaps++
     }
 
     @Deprecated("Widget binding and configuration still report through onActivityResult")
@@ -223,5 +225,9 @@ class MainActivity : ComponentActivity(), PliHost {
         }
     }
 
-    private companion object { const val GOOGLE = "com.google.android.googlequicksearchbox" }
+    companion object {
+        private const val GOOGLE = "com.google.android.googlequicksearchbox"
+        /** Opens the launcher on its recent apps (from the floating dock). */
+        const val EXTRA_RECENTS = "com.yuksel.pli.SHOW_RECENTS"
+    }
 }

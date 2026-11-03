@@ -119,6 +119,19 @@ class FloatingDock : Service() {
         val apps = getSystemService(LauncherApps::class.java)
         val density = resources.displayMetrics.densityDpi
         val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL }
+        // "Récents": Fold Launcher Pro's recent apps screen.
+        column.addView(TextView(this).apply {
+            text = "Récents"; setTextColor(0xFFF4F2FF.toInt()); textSize = 12f; gravity = Gravity.CENTER
+            val pad = (8 * dp).toInt(); setPadding(pad, pad, pad, pad)
+            background = GradientDrawable().apply { cornerRadius = 16 * dp; setColor(0x22FFFFFF) }
+            setOnClickListener {
+                removePanel()
+                runCatching {
+                    startActivity(Intent(this@FloatingDock, MainActivity::class.java).putExtra(MainActivity.EXTRA_RECENTS, true)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP))
+                }
+            }
+        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = (6 * dp).toInt() })
         for ((_, component, user) in dockApps()) {
             val info = runCatching {
                 apps.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setComponent(component), user)

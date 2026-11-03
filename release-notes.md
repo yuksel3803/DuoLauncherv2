@@ -1,1 +1,2 @@
-- Page Aujourd'hui : le titre et le bouton « Modifier / Terminé » restent fixes en haut et ne sont plus rognés ; seules les cartes défilent dessous.
+- Applis récentes à la Fold Launcher Pro : grandes cartes de tes dernières applis, toucher pour ouvrir, « À côté » pour l'écran partagé, « Tout fermer » pour libérer la mémoire. S'ouvre avec un geste (Réglages → Gestes → « Applis récentes ») ou le bouton « Récents » du dock dans les applis.
+- Déplacer une icône vers une autre page : pendant le déplacement, de grosses pastilles numérotées apparaissent en bas (1, 2, 3, +). Survole-en une et la page change tout de suite.
